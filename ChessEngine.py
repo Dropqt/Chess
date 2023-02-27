@@ -40,11 +40,11 @@ class GameState():
     
     #all moves without considering checks
     def getAllPossibleMoves(self):
-        moves=[Move((6,4),(4,4),self.board)]
+        moves=[]
         for r in range(len(self.board)): #number of rows
             for c in range(len(self.board[r])): #number of columns
                 turn = self.board[r][c][0]
-                if (turn == 'w' and self.whiteToMove) and (turn =='b' and not self.whiteToMove):
+                if (turn == 'w' and self.whiteToMove) or (turn =='b' and not self.whiteToMove):
                     piece= self.board[r][c][1]
                     if piece == 'p':
                         self.getPawnMoves(r,c,moves)
@@ -56,7 +56,30 @@ class GameState():
         
         """
     def getPawnMoves(self,r,c,moves):
-        pass
+        if self.whiteToMove: #white pawns moves
+            if self.board[r-1][c]== '--':#1square pawn advance
+                moves.append(Move((r,c),(r-1,c),self.board))
+                if r == 6 and self.board[r-2][c]== '--': # 2 square pawn adwance
+                    moves.append(Move((r,c),(r-2,c),self.board))
+            if c-1 >= 0: # capture to the left
+                if self.board[r-1][c-1][0]=='b': #enemy piece to capture
+                    moves.append(Move((r,c),(r-1,c-1),self.board))
+            if c+1 <=7: # captures to the right 
+                if self.board[r-1][c+1][0] == 'b':#enemy piece to captre
+                    moves.append(Move((r,c),(r-1,c+1),self.board))
+        else:
+            if self.board[r+1][c]== '--':#1 square advance for black
+                moves.append(Move((r,c),(r+1,c), self.board))
+                if r==1 and self.board[r+2][c]== '--':#2 square pawn advance for black
+                    moves.append(Move((r,c),(r+2,c),self.board))
+            if c-1 >=0: #capture to the left
+                if self.board[r+1][c-1][0] == 'w':
+                    
+                    moves.append(Move((r,c),(r+1,c-1),self.board))
+            if c+1 <=7: # capture to the right?
+                if self.board[r+1][c+1][0]=='w':
+                    moves.append(Move((r,c),(r+1,c+1),self.board))
+                    
         """ 
         Get all the pawn moves for the pawn located at row,col and add these moves to the list
         
@@ -84,7 +107,7 @@ class Move():
         self.pieceMoved=board[self.startRow][self.startCol]
         self.pieceCaptured=board[self.endRow][self.endCol]
         self.moveID=self.startRow*1000 + self.startCol*100+self.endRow*10+self.endCol
-        print(self.moveID)
+        #print(self.moveID)
     """
     Overriding the equals method
     """
