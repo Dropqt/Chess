@@ -3,19 +3,21 @@
 """
 class GameState():
     def __init__(self):
-        # board 8x8 2D list, 2 characters, 1st char color of peace, 2nd char is type of piece
+        # board 8x8 2D list, 2 characters, 1st char color of piece, 2nd char is type of piece
         # '--' is empty space with no piece
         self.board = [
             ['bR','bN','bB','bQ','bK','bB','bN','bR'],
             ['bp','bp','bp','bp','bp','bp','bp','bp'],
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
-            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','bR','wR','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
         self.whiteToMove= True
         self.moveLog=[]
+        self.moveFunctions={'p':self.getPawnMoves,'R':self.getRookMoves,'N':self.getKnightMoves,
+                            'B':self.getBishopMoves,'Q':self.getQueenMoves,'K':self.getKingMoves}
         
     def makeMove(self,move):
         self.board[move.startRow][move.startCol]= '--'
@@ -46,10 +48,7 @@ class GameState():
                 turn = self.board[r][c][0]
                 if (turn == 'w' and self.whiteToMove) or (turn =='b' and not self.whiteToMove):
                     piece= self.board[r][c][1]
-                    if piece == 'p':
-                        self.getPawnMoves(r,c,moves)
-                    elif piece == 'R':
-                        self.getRookMoves(r,c,moves)
+                    self.moveFunctions[piece](r,c,moves) #calls the appropriate move function to the pieces. See constructor for more info
         return moves
         """ 
         Get all the pawn moves for the pawn located at row,col and add these moves to the list
@@ -85,8 +84,92 @@ class GameState():
         
         """
     def getRookMoves(self,r,c,moves):
-        pass
+        if self.whiteToMove:
+            #check if rook can go up:
+            for i in range(r-1,-1,-1):
+                if self.board[i][c]=='--':
+                    moves.append(Move((r,c),(i,c),self.board))
+                if self.board[i][c][0]=='b':
+                    moves.append(Move((r,c),(i,c),self.board))
+                    break
+                if self.board[i][c][0]=='w':
+                    break
+            #check if rook can go down:
+            for i in range(r+1,8):
+                if self.board[i][c]=='--':
+                    moves.append(Move((r,c),(i,c),self.board))
+                if self.board[i][c][0]=='b':
+                    moves.append(Move((r,c),(i,c),self.board))
+                    break
+                if self.board[i][c][0]=='w':
+                    break
+            #check if rook can go left:
+            for i in range(c-1,-1,-1):
+                if self.board[r][i]=='--':
+                    moves.append(Move((r,c),(r,i),self.board))
+                if self.board[r][i][0]=='b':
+                    moves.append(Move((r,c),(r,i),self.board))
+                    break
+                if self.board[r][i][0]=='w':
+                    break
+            #check if rook can go right:
+            for i in range(c+1,8):
+                if self.board[r][i]=='--':
+                    moves.append(Move((r,c),(r,i),self.board))
+                if self.board[r][i][0]=='b':
+                    moves.append(Move((r,c),(r,i),self.board))
+                    break
+                if self.board[r][i][0]=='w':
+                    break
+        else:
+            #check if rook can go up:
+            for i in range(r-1,-1,-1):
+                if self.board[i][c]=='--':
+                    moves.append(Move((r,c),(i,c),self.board))
+                if self.board[i][c][0]=='w':
+                    moves.append(Move((r,c),(i,c),self.board))
+                    break
+                if self.board[i][c][0]=='b':
+                    break
+            #check if rook can go down:
+            for i in range(r+1,8):
+                if self.board[i][c]=='--':
+                    moves.append(Move((r,c),(i,c),self.board))
+                if self.board[i][c][0]=='w':
+                    moves.append(Move((r,c),(i,c),self.board))
+                    break
+                if self.board[i][c][0]=='b':
+                    break
+            #check if rook can go left:
+            for i in range(c-1,-1,-1):
+                if self.board[r][i]=='--':
+                    moves.append(Move((r,c),(r,i),self.board))
+                if self.board[r][i][0]=='w':
+                    moves.append(Move((r,c),(r,i),self.board))
+                    break
+                if self.board[r][i][0]=='b':
+                    break
+            #check if rook can go right:
+            for i in range(c+1,8):
+                if self.board[r][i]=='--':
+                    moves.append(Move((r,c),(r,i),self.board))
+                if self.board[r][i][0]=='w':
+                    moves.append(Move((r,c),(r,i),self.board))
+                    break
+                if self.board[r][i][0]=='b':
+                    break
     
+    
+    
+    
+    def getKnightMoves(self,r,c,moves):
+        pass
+    def getBishopMoves(self,r,c,moves):
+        pass
+    def getQueenMoves(self,r,c,moves):
+        pass
+    def getKingMoves(self,r,c,moves):
+        pass
 class Move():
     # maps keys to values
     #key : value
