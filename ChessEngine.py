@@ -9,8 +9,8 @@ class GameState():
             ['bR','bN','bB','bQ','bK','bB','bN','bR'],
             ['bp','bp','bp','bp','bp','bp','bp','bp'],
             ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','bB','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
-            ['--','--','--','bR','wR','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
@@ -165,7 +165,130 @@ class GameState():
     def getKnightMoves(self,r,c,moves):
         pass
     def getBishopMoves(self,r,c,moves):
-        pass
+        #check if bishop can go NW(NorthWest)
+        counter=1
+        if self.whiteToMove:
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count ==0 or column_count==0:
+                    break
+                row_count-=counter
+                column_count-=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'b':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'w':
+                    break
+            #Check if bishop can go SW(SouthWest)
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count>=7 or column_count ==0:
+                    break
+                row_count+=counter
+                column_count-=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'b':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'w':
+                    break
+            #Check if bishop can go NE(NorthEast)
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count==0 or column_count >=7:
+                    break
+                row_count-=counter
+                column_count+=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'b':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'w':
+                    break
+            #Check if bishop can go SE(SouthEast)
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count>=7 or column_count >=7:
+                    break
+                row_count+=counter
+                column_count+=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'b':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'w':
+                    break
+        else:
+            #check if bishop can go NW(NorthWest)
+            counter=1
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count ==0 or column_count==0:
+                    break
+                row_count-=counter
+                column_count-=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'w':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'b':
+                    break
+        #Check if bishop can go SW(SouthWest)
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count>=7 or column_count ==0:
+                    break
+                row_count+=counter
+                column_count-=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'w':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'b':
+                    break
+        #Check if bishop can go NE(NorthEast)
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count==0 or column_count >=7:
+                    break
+                row_count-=counter
+                column_count+=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'w':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'b':
+                    break
+        #Check if bishop can go SE(SouthEast)
+            row_count=int(r)
+            column_count=int(c)
+            for i in range(8):
+                if row_count>=7 or column_count >=7:
+                    break
+                row_count+=counter
+                column_count+=counter
+                if self.board[row_count][column_count]== '--':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                if self.board[row_count][column_count][0]== 'w':
+                    moves.append(Move((r,c),(row_count,column_count), self.board))
+                    break
+                if self.board[row_count][column_count][0]== 'b':
+                    break
     def getQueenMoves(self,r,c,moves):
         pass
     def getKingMoves(self,r,c,moves):
