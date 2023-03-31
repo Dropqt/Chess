@@ -86,7 +86,7 @@ def main():
                     gameOver=False
         #AI move finder
         if not gameOver and not humanTurn:
-            AIMove=ChessAI.findBestMove(gs, validMoves)
+            AIMove=ChessAI.findBestMoveMinMax(gs, validMoves)
             if AIMove == None:
                 AIMove= ChessAI.findRandomMove(validMoves)
             gs.makeMove(AIMove)
@@ -185,8 +185,8 @@ def animateMove(move,screen,board,clock):
     global colors
     dR= move.endRow - move.startRow
     dC= move.endCol - move.startCol
-    framesPerSquare= 10 #frames to move one square
-    frameCount=(abs(dR)+abs(dC)*framesPerSquare)
+    framesPerSquare= 7 #frames to move one square
+    frameCount=((abs(dR)+abs(dC))*framesPerSquare)
     for frame in range(frameCount+1):
         r,c=(move.startRow + dR*frame/frameCount,move.startCol + dC*frame/frameCount)
         drawBoard(screen)
