@@ -1,4 +1,5 @@
 import copy
+import time
 """Class stores all information about the current chess game.
     And checking for valid moves for current GameState, and move log.
 """
@@ -13,7 +14,7 @@ class GameState():
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
-            ['wp','wp','wp','wp','wp','wp','wp','wp'],
+            ['wp','wp','wp','wp','wp','--','--','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
         self.whiteToMove= True
         self.moveLog=[]
@@ -24,6 +25,7 @@ class GameState():
         self.checkMate= False
         self.staleMate= False
         self.enpassantPossible=() #coordinates for square where en passant is possible
+        self.enpassantPossibleLog=[self.enpassantPossible]
         self.currentCastlingRight= CastleRights(True,True,True,True)
         self.castleRightLog=[CastleRights(self.currentCastlingRight.wks,self.currentCastlingRight.bks,
                                         self.currentCastlingRight.wqs,self.currentCastlingRight.bqs)]
@@ -60,6 +62,7 @@ class GameState():
                 self.board[move.endRow][move.endCol+1]= self.board[move.endRow][move.endCol-2]#moves the rook
                 self.board[move.endRow][move.endCol-2]= '--'
         #update castling rights when its a rook or a king move
+        self.enpassantPossibleLog.append(self.enpassantPossible)
         self.updateCastleRights(move)
         self.castleRightLog.append(CastleRights(self.currentCastlingRight.wks,self.currentCastlingRight.bks,
                                         self.currentCastlingRight.wqs,self.currentCastlingRight.bqs))
@@ -83,10 +86,8 @@ class GameState():
             if move.isEnpassantMove:
                 self.board[move.endRow][move.endCol]= '--' #leave landing square blank
                 self.board[move.startRow][move.endCol]= move.pieceCaptured
-                self.enpassantPossible=(move.endRow,move.endCol)
-            #undo 2pawn square advance
-            if move.pieceMoved[1]== 'p' and abs(move.startRow-move.endRow)==2:
-                self.enpassantPossible=()
+            self.enpassantPossibleLog.pop()
+            self.enpassantPossible=self.enpassantPossibleLog[-1]
                 
                 
             #undo castling rights
@@ -630,6 +631,7 @@ class Move():
         if self.isEnpassantMove:
             self.pieceCaptured = 'wp' if self.pieceMoved =='bp' else 'bp'
         #castle move
+        self.isCapture= self.pieceCaptured != '--'
         self.isCastleMove= isCastleMove
         
         #print(self.moveID)
@@ -648,8 +650,28 @@ class Move():
     def getRankFile(self,r,c):
         return self.colsToFiles[c]+ self.rowsToRanks[r]
     
-    
-    
+    #overriding str() function
+    def __str__(self):
+        if self.isCastleMove:
+            return "O-O" if endCol==6 else "O-O-O"
+        endSquare= self.getRankFile(self.endRow, self.endCol)
+        #pawn moves
+        if self.pieceMoved[1]=='p':
+            if self.isCapture:
+                return self.colsToFiles[self.startCol]+'x'+endSquare
+            else:
+                return endSquare
+        #pawn promotions
+        
+        #two of the same type of piece moving to the same square, Nbd2 if both knights can move to d2
+        
+        #adding + for check move, and # for checkmate move
+        
+        #piece moves
+        moveString= self.pieceMoved[1]
+        if self.isCapture:
+            moveString+='x'
+            return moveString+endSquare
     
     
     
