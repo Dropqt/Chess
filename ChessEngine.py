@@ -14,8 +14,9 @@ class GameState():
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
-            ['wp','wp','wp','wp','wp','--','--','wp'],
+            ['wp','wp','wp','wp','wp','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
+        
         self.whiteToMove= True
         self.moveLog=[]
         self.moveFunctions={'p':self.getPawnMoves,'R':self.getRookMoves,'N':self.getKnightMoves,
@@ -653,7 +654,7 @@ class Move():
     #overriding str() function
     def __str__(self):
         if self.isCastleMove:
-            return "O-O" if endCol==6 else "O-O-O"
+            return "O-O" if self.endCol==6 else "O-O-O"
         endSquare= self.getRankFile(self.endRow, self.endCol)
         #pawn moves
         if self.pieceMoved[1]=='p':
@@ -671,7 +672,7 @@ class Move():
         moveString= self.pieceMoved[1]
         if self.isCapture:
             moveString+='x'
-            return moveString+endSquare
+        return moveString+endSquare
     
     
     
