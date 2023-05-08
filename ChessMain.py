@@ -3,9 +3,10 @@
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT']= '1'
 import pygame as p
-import ChessEngine, ChessAI
+import ChessEngine, ChessAI,ChessWeight
 import time
 from multiprocessing import Process, Queue
+#from functools import lru_cache
 
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH= 250
@@ -46,8 +47,8 @@ def main():
     sqSelected= () # no square is selected, keep track of last click 
     playerClicks=[] # 2 tuples
     gameOver= False
-    playerOne=True #If a Human is playing white, then this will be true. If Ai is playing white it will be false
-    playerTwo=True
+    playerOne=False #If a Human is playing white, then this will be true. If Ai is playing white it will be false
+    playerTwo=False
     AIThinking= False
     moveFinderProcess= None
     moveUndone= False
@@ -143,10 +144,12 @@ def main():
             moveUndone=False
             
         drawGameState(screen,gs,validMoves,sqSelected,moveLogFont)
-        if gs.checkMate or gs.staleMate:
+        if gs.checkMate or gs.staleMate or gs.treeFoldRep():
             gameOver= True
             if gs.staleMate:
                 drawEndGameText(screen,'Stalemate')
+            elif gs.treeFoldRep():
+                drawEndGameText(screen, 'Draw by 3fold repetition')
             else:
                 if gs.whiteToMove:
                     drawEndGameText(screen,'Black wins by checkmate')
@@ -287,6 +290,8 @@ def drawEndGameText(screen,text):
     screen.blit(textObject, textLocation)
     textObject= font.render(text,0,p.Color('Black'))
     screen.blit(textObject,textLocation.move(2,2))
+    
+
 
 if __name__ == '__main__':
     main()

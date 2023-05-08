@@ -7,6 +7,8 @@ class GameState():
     def __init__(self):
         # board 8x8 2D list, 2 characters, 1st char color of piece, 2nd char is type of piece
         # '--' is empty space with no piece
+
+        
         self.board = [
             ['bR','bN','bB','bQ','bK','bB','bN','bR'],
             ['bp','bp','bp','bp','bp','bp','bp','bp'],
@@ -16,6 +18,7 @@ class GameState():
             ['--','--','--','--','--','--','--','--'],
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
+
         
         self.whiteToMove= True
         self.moveLog=[]
@@ -25,6 +28,7 @@ class GameState():
         self.blackKingLocation=(0,4)
         self.checkMate= False
         self.staleMate= False
+        self.draw=False
         self.enpassantPossible=() #coordinates for square where en passant is possible
         self.enpassantPossibleLog=[self.enpassantPossible]
         self.currentCastlingRight= CastleRights(True,True,True,True)
@@ -592,6 +596,30 @@ class GameState():
         if self.board[r][c-1]=='--' and self.board[r][c-2]=='--' and self.board[r][c-3]=='--':
             if not self.squareUnderAttack(r,c-1) and not self.squareUnderAttack(r,c-2):
                 moves.append(Move((r,c),(r,c-2),self.board, isCastleMove=True))
+    """
+            3fold repetition
+    """
+    def treeFoldRep(self):
+        if len(self.moveLog)> 8:
+            moveOne=(self.moveLog[-2],self.moveLog[-1])
+            moveTwo=(self.moveLog[-4],self.moveLog[-3])
+            moveThree=(self.moveLog[-6],self.moveLog[-5])
+            moveFour=(self.moveLog[-8],self.moveLog[-7])
+            if moveOne==moveThree and moveTwo == moveFour:
+                self.draw=True
+                return True
+        else:
+            return False
+    
+    def move_value(self,move):
+        pieceScore={"K":0,"Q":9.5,'R':5.63,'B':3.33,"N":3.05,'p':1}
+        pieceCaptured= self.board[move.endRow][move.endCol]
+        attacker=self.board[move.startRow][move.startCol]
+        if pieceCaptured !='--' and attacker != '--':
+            victim= pieceCaptured
+            #print(attacker,victim)
+            return 10*pieceScore[victim[1]]-pieceScore[attacker[1]]
+        return 0
 
 
 
@@ -636,6 +664,8 @@ class Move():
         self.isCastleMove= isCastleMove
         
         #print(self.moveID)
+
+        
     """
     Overriding the equals method
     """
@@ -650,6 +680,7 @@ class Move():
         
     def getRankFile(self,r,c):
         return self.colsToFiles[c]+ self.rowsToRanks[r]
+    
     
     #overriding str() function
     def __str__(self):
