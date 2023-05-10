@@ -2,18 +2,18 @@ import random
 import time
 import ChessWeight
 from ChessEngine import GameState
+
 gs=GameState()
 pieceScore={"K":0,"Q":9.5,'R':5.63,'B':3.33,"N":3.05,'p':1}
 
-knightScores=[
-    [-10, -5,  -5,  -5,  -5,  -5,  -5,  -10],
-    [-3,  -3,   -3,   -3,   -3,   -3,   -3,  -5],
-    [-3,  -2,   10,   10,   10,   10,   -3,  -5],
-    [-3,  -2,   10,   10,   10,   10,   -3,  -5],
-    [-3,  -2,   10,   10,   10,   10,   -3,  -5],
-    [-3,  -2,   10,   10,   10,   10,   -3,  -5],
-    [-3,  -2,   -2,   -2,   -2,   -2,   -3,  -5],
-    [-10,   0,  -10,  -10,  -10,  -10,    0,  -10]
+knightScores=[ [ -50, -40, -30, -30, -30, -30, -40, -50 ],
+[ -40, -20,   0,   0,   0,   0, -20, -40 ],
+[ -30,   0,  10,  15,  15,  10,   0, -30 ],
+[ -30,   5,  15,  20,  20,  15,   5, -30 ],
+[ -30,   0,  15,  20,  20,  15,   0, -30 ],
+[ -30,   5,  10,  15,  15,  10,   5, -30 ],
+[ -40, -20,   0,   5,   5,   0, -20, -40 ],
+[ -50, -40, -30, -30, -30, -30, -40, -50 ]
 ]
 pawnScoresw=[
     [10,10,10,10,10,10,10,10],
@@ -25,51 +25,63 @@ pawnScoresw=[
     [5,1,1,1,1,1,1,5],
     [0,0,0,0,0,0,0,0]
     ]
+pawnScoresw=[
+[ 0,   0,   0,   0,   0,   0,   0,   0 ],
+[ 50,  50,  50,  50,  50,  50,  50,  50 ],
+[ 10,  10,  20,  30,  30,  20,  10,  10 ],
+[ 5,   5,  10,  25,  25,  10,   5,   5 ],
+[ 0,   0,   0,  20,  20,   0,   0,   0 ],
+[ 5,  -5, -10,   1,   1, -10,  -5,   5 ],
+[ 5,  10,  10, -20, -20,  10,  10,   5 ],
+[ 0,   0,   0,   0,   0,   0,   0,   0 ]
+]
 #Just reversing the order of weight elements for black pieces
 pawnScoresb=[pawnScoresw[x] for x in range(len(pawnScoresw)-1,-1,-1)]
-bishopsScoresw =[
-    [-10,-5,-5,-5,-5,-5,-5,-10],
-    [-5 , 0, 0, 0, 0, 0, 0,  0],
-    [-5 ,0 ,10,5 ,5 ,10 ,0 ,-5],
-    [-5, 5.5,10,6, 6, 10, 5.5,-5],
-    [-5, 0, 5, 5, 5, 5, 0, -5],
-    [-5, 5, 5, 0, 0, 5, 5, -5],
-    [-5,10, 0, 0, 0, 0, 10,-5],
-    [-10,-5,-5,-5,-5,-5,-5,-10]
+bishopsScoresw =[ 
+[ -20, -10, -10, -10, -10, -10, -10, -20 ],
+[ -10,   0,   0,   0,   0,   0,   0, -10 ],
+[ -10,   0,   5,  10,  10,   5,   0, -10 ],
+[ -10,   5,   5,  10,  10,   5,   5, -10 ],
+[ -10,   0,  10,  10,  10,  10,   0, -10 ],
+[ -10,  10,  10,  10,  10,  10,  10, -10 ],
+[ -10,   5,   0,   0,   0,   0,   5, -10 ],
+[ -20, -10, -10, -10, -10, -10, -10, -20 ]
 ]
 bishopsScoresb=[bishopsScoresw[x] for x in range(len(bishopsScoresw)-1,-1,-1)]
 
-rooksScorew = [
-    [0,   0,   0,   0,   0,   0,   0,   0],
-    [5,  9,  9,  10,  10,  9,  9,  5],
-    [0,   0,   0,   0,   0,   0,   0,   0],
-    [0,   0,   0,   0,   0,   0,   0,   0],
-    [0,   0,   0,   0,   0,   0,   0,   0],
-    [0,   0,   0,   0,   0,   0,   0,   0],
-    [0,   0,   0,   6,   6,   0,   0,   0],
-    [0,   0,   8,  9,  9,  8,   0,   0]
+rooksScorew =[
+[  0,   0,   0,   0,   0,   0,   0,   0 ],
+[  5,  10,  10,  10,  10,  10,  10,   5 ],
+[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
+[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
+[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
+[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
+[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
+[  0,   -3,   0,   5,   5,   0,   -3,   0 ]
 ]
 rooksScoreb=[rooksScorew[x] for x in range(len(rooksScorew)-1,-1,-1)]
 
 queensScorew=[
-[-10, -5, -5, -10, -10, -5, -5, -10], 
-[-5, 0, 0, 0, 0, 0, 0, -5], 
-[-5, 0, 10, 10, 10, 10, 0, -1], 
-[-5, 0, 5, 5, 5, 5, 0, -2], 
-[0, 0, 5, 5, 5, 5, 0, -2], 
-[-1, 5, 5, 5, 5, 5, 0, -1], 
-[-1, 0, 0, 0, 0, 0, 0, -1], 
-[-2, -1, -1, -5, -5, -1, -1, -2]]
+[ -20, -10, -10,  -5,  -5, -10, -10, -20 ],
+[ -10,   0,   0,   0,   0,   0,   0, -10 ],
+[ -10,   0,   5,   5,   5,   5,   0, -10 ],
+[  -5,   0,   5,   5,   5,   5,   0,  -5 ],
+[   0,   0,   5,   5,   5,   5,   0,  -5 ],
+[ -10,   5,   5,   5,   5,   5,   0, -10 ],
+[ -10,   0,   5,   0,   0,   0,   0, -10 ],
+[ -20, -10, -10,  -5,  -5, -10, -10, -20 ]
+]
 queensScoreb=[queensScorew[x] for x in range(len(queensScorew)-1,-1,-1)]
 
-kingsScorew=[[-3, -4, -4, -5, -5, -4, -4, -3], 
-[-3, -4, -4, -5, -5, -4, -4, -3], 
-[-3, -4, -4, -5, -5, -4, -4, -3], 
-[-3, -4, -4, -5, -5, -4, -4, -3], 
-[-2, -3, -3, -4, -4, -3, -3, -2], 
-[-1, -2, -2, -2, -2, -2, -2, -1], 
-[2, 2, -1, -1, -1, -1, 2, 2], 
-[2, 3, 1, -1, 0, -1.2, 3, 2]]
+kingsScorew=[
+[-30, -40, -40, -50, -50, -40, -40, -30], 
+[-30, -40, -40, -50, -50, -40, -40, -30], 
+[-30, -40, -40, -50, -50, -40, -40, -30], 
+[-30, -40, -40, -50, -50, -40, -40, -30], 
+[-20, -30, -30, -40, -40, -30, -30, -20], 
+[-10, -20, -20, -20, -20, -20, -20, -10], 
+[20, 20, 0, 0, 0, 0, 20, 20], 
+[20, 30, 10, -1, 0, -1, 30, 20]]
 kingsScoreb=[kingsScorew[x] for x in range(len(kingsScorew)-1,-1,-1)]
 
 
@@ -83,8 +95,9 @@ piecePositionScores= {"N":knightScores,
 CHECKMATE= 10000
 STALEMATE=0
 global DEPTH
-DEPTH=4
-
+DEPTH=6
+global KILLER_MOVE_TABLE
+KILLER_MOVE_TABLE= [None]* (DEPTH +3)
 """
 Random Move
 """
@@ -136,14 +149,14 @@ def findBestMove(gs, validMoves,returnQueue):
     counter=0
     moveLogForDepthInc= len(gs.moveLog)
     if moveLogForDepthInc >50:
-        DEPTH=5
+        DEPTH=6
 
     nextMove=None
     #findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove)
 
     #random.shuffle(validMoves)
     #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
-    negamaxAlphaBetaKillerMove(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE)
+    negamaxAlphaBetaKillerMoveNew(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
     print(counter)
     returnQueue.put(nextMove)
     
@@ -202,8 +215,6 @@ def negamaxAlphaBetaKillerMove(gs,validMoves,depth,alpha,beta):
     counter+=1
     if depth == 0:
         return (1 if gs.whiteToMove else -1)*scoreBoard(gs)
-    moves= gs.getValidMoves()
-    sort_moves(moves)#Sort using MVV-LVA heuristic
     maxScore= -CHECKMATE
     #Try killer move first
     killer_moves = [[] for _ in range(depth+1)]
@@ -211,9 +222,9 @@ def negamaxAlphaBetaKillerMove(gs,validMoves,depth,alpha,beta):
         if move in validMoves:
             validMoves.remove(move)
             gs.makeMove(move)
-            new_position= gs.getValidMoves()
-            sort_moves(new_position)
-            score= -negamaxAlphaBetaKillerMove(gs, new_position, depth-1, -beta, -alpha)
+            nextMoves= gs.getValidMoves()
+            sort_moves(nextMoves)#Sort using MVV-LVA heuristic
+            score= -negamaxAlphaBetaKillerMove(gs, nextMoves, depth-1, -beta, -alpha)
             if score>maxScore:
                 maxScore = score
                 nextMove=move
@@ -226,9 +237,9 @@ def negamaxAlphaBetaKillerMove(gs,validMoves,depth,alpha,beta):
     #Try other moves
     for move in validMoves:
         gs.makeMove(move)
-        new_position=gs.getValidMoves()
-        sort_moves(new_position)
-        score= -negamaxAlphaBetaKillerMove(gs, new_position, depth-1, -beta, -alpha)
+        nextMoves=gs.getValidMoves()
+        sort_moves(nextMoves)#Sort using MVV-LVA heuristic
+        score= -negamaxAlphaBetaKillerMove(gs, nextMoves, depth-1, -beta, -alpha)
         
         if score>maxScore:
             maxScore=score
@@ -265,6 +276,40 @@ def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
         if alpha >=beta:
             break
     #print(maxScore)
+    return maxScore
+
+
+def negamaxAlphaBetaKillerMoveNew(gs,validMoves,depth,alpha,beta,turnMultiplier):
+    global nextMove, counter, KILLER_MOVE_TABLE
+    counter += 1
+    if depth == 0:
+        return turnMultiplier * scoreBoard(gs)
+
+    maxScore = -CHECKMATE
+    killer_move = KILLER_MOVE_TABLE[depth] if depth < len(KILLER_MOVE_TABLE) else None
+
+    # Move the killer move to the front of the validMoves list
+    if killer_move is not None and killer_move in validMoves:
+        validMoves.remove(killer_move)
+        validMoves.insert(0, killer_move)
+
+    for move in validMoves:
+        gs.makeMove(move)
+        nextMoves = gs.getValidMoves()
+        sort_moves(nextMoves)  # Sort using MVV-LVA heuristic
+        score = -negamaxAlphaBetaKillerMoveNew(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+        if score > maxScore:
+            maxScore = score
+            if depth == DEPTH:
+                nextMove = move
+                print(move, score * turnMultiplier, "depth:", depth, "killer moves:",len(KILLER_MOVE_TABLE))
+        gs.undoMove()
+        if maxScore > alpha:  # pruning
+            alpha = maxScore
+        if alpha >= beta:
+            # Store the killer move in the table for the current depth
+            KILLER_MOVE_TABLE[depth] = move
+            break
     return maxScore
 """
 Pos score good for white, negative score is good for black
@@ -314,9 +359,9 @@ def scoreBoard(gs):
                     else:
                         piecePositionScore= piecePositionScores['p'][1][row][col]
                 if square[0] == 'w':
-                    score+= pieceScore[square[1]] + piecePositionScore *0.15
+                    score+= pieceScore[square[1]] + piecePositionScore *0.16
                 elif square[0]=='b':
-                    score-= pieceScore[square[1]] + piecePositionScore *0.15
+                    score-= pieceScore[square[1]] + piecePositionScore *0.16
     return score
 """
 Score the board based on material
