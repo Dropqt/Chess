@@ -1,103 +1,25 @@
 import random
 import time
-import ChessWeight
+import ChessWeight as cw
 from ChessEngine import GameState
 
 gs=GameState()
 pieceScore={"K":0,"Q":9.5,'R':5.63,'B':3.33,"N":3.05,'p':1}
 
-knightScores=[ [ -50, -40, -30, -30, -30, -30, -40, -50 ],
-[ -40, -20,   0,   0,   0,   0, -20, -40 ],
-[ -30,   0,  10,  15,  15,  10,   0, -30 ],
-[ -30,   5,  15,  20,  20,  15,   5, -30 ],
-[ -30,   0,  15,  20,  20,  15,   0, -30 ],
-[ -30,   5,  10,  15,  15,  10,   5, -30 ],
-[ -40, -20,   0,   5,   5,   0, -20, -40 ],
-[ -50, -40, -30, -30, -30, -30, -40, -50 ]
-]
-pawnScoresw=[
-    [10,10,10,10,10,10,10,10],
-    [9,9,9,9,9,9,9,9],
-    [7,7,7,7,7,7,7,7],
-    [5,5,8,8,8,8,5,5],
-    [0,0,0,5,5,0,0,0],
-    [1,-1,-1,0,0,-1,-1,1],
-    [5,1,1,1,1,1,1,5],
-    [0,0,0,0,0,0,0,0]
-    ]
-pawnScoresw=[
-[ 0,   0,   0,   0,   0,   0,   0,   0 ],
-[ 50,  50,  50,  50,  50,  50,  50,  50 ],
-[ 10,  10,  20,  30,  30,  20,  10,  10 ],
-[ 5,   5,  10,  25,  25,  10,   5,   5 ],
-[ 0,   0,   0,  20,  20,   0,   0,   0 ],
-[ 5,  -5, -10,   1,   1, -10,  -5,   5 ],
-[ 5,  10,  10, -20, -20,  10,  10,   5 ],
-[ 0,   0,   0,   0,   0,   0,   0,   0 ]
-]
-#Just reversing the order of weight elements for black pieces
-pawnScoresb=[pawnScoresw[x] for x in range(len(pawnScoresw)-1,-1,-1)]
-bishopsScoresw =[ 
-[ -20, -10, -10, -10, -10, -10, -10, -20 ],
-[ -10,   0,   0,   0,   0,   0,   0, -10 ],
-[ -10,   0,   5,  10,  10,   5,   0, -10 ],
-[ -10,   5,   5,  10,  10,   5,   5, -10 ],
-[ -10,   0,  10,  10,  10,  10,   0, -10 ],
-[ -10,  10,  10,  10,  10,  10,  10, -10 ],
-[ -10,   5,   0,   0,   0,   0,   5, -10 ],
-[ -20, -10, -10, -10, -10, -10, -10, -20 ]
-]
-bishopsScoresb=[bishopsScoresw[x] for x in range(len(bishopsScoresw)-1,-1,-1)]
+piecePositionScores= {"N":cw.knightScores,
+                        "B":[cw.bishopsScoresw,cw.bishopsScoresb],
+                        "R":[cw.rooksScorew,cw.rooksScoreb],
+                        "Q":[cw.queensScorew,cw.queensScoreb],
+                        "p":[cw.pawnScoresw,cw.pawnScoresb],
+                        "K":[cw.kingsScorew,cw.kingsScoreb]}
 
-rooksScorew =[
-[  0,   0,   0,   0,   0,   0,   0,   0 ],
-[  5,  10,  10,  10,  10,  10,  10,   5 ],
-[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
-[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
-[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
-[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
-[ -5,   0,   0,   0,   0,   0,   0,  -5 ],
-[  0,   -3,   0,   5,   5,   0,   -3,   0 ]
-]
-rooksScoreb=[rooksScorew[x] for x in range(len(rooksScorew)-1,-1,-1)]
-
-queensScorew=[
-[ -20, -10, -10,  -5,  -5, -10, -10, -20 ],
-[ -10,   0,   0,   0,   0,   0,   0, -10 ],
-[ -10,   0,   5,   5,   5,   5,   0, -10 ],
-[  -5,   0,   5,   5,   5,   5,   0,  -5 ],
-[   0,   0,   5,   5,   5,   5,   0,  -5 ],
-[ -10,   5,   5,   5,   5,   5,   0, -10 ],
-[ -10,   0,   5,   0,   0,   0,   0, -10 ],
-[ -20, -10, -10,  -5,  -5, -10, -10, -20 ]
-]
-queensScoreb=[queensScorew[x] for x in range(len(queensScorew)-1,-1,-1)]
-
-kingsScorew=[
-[-30, -40, -40, -50, -50, -40, -40, -30], 
-[-30, -40, -40, -50, -50, -40, -40, -30], 
-[-30, -40, -40, -50, -50, -40, -40, -30], 
-[-30, -40, -40, -50, -50, -40, -40, -30], 
-[-20, -30, -30, -40, -40, -30, -30, -20], 
-[-10, -20, -20, -20, -20, -20, -20, -10], 
-[20, 20, 0, 0, 0, 0, 20, 20], 
-[20, 30, 10, -1, 0, -1, 30, 20]]
-kingsScoreb=[kingsScorew[x] for x in range(len(kingsScorew)-1,-1,-1)]
-
-
-piecePositionScores= {"N":knightScores,
-                        "B":[bishopsScoresw,bishopsScoresb],
-                        "R":[rooksScorew,rooksScoreb],
-                        "Q":[queensScorew,queensScoreb],
-                        "p":[pawnScoresw,pawnScoresb],
-                        "K":[kingsScorew,kingsScoreb]}
-
-CHECKMATE= 10000
+CHECKMATE= 50000
 STALEMATE=0
-global DEPTH
-DEPTH=6
+global DEPTH, MAX_DEPTH
+DEPTH=4
+MAX_DEPTH=6
 global KILLER_MOVE_TABLE
-KILLER_MOVE_TABLE= [None]* (DEPTH +3)
+KILLER_MOVE_TABLE=  [[] for _ in range(10)]
 """
 Random Move
 """
@@ -148,15 +70,25 @@ def findBestMove(gs, validMoves,returnQueue):
     global nextMove, counter, DEPTH
     counter=0
     moveLogForDepthInc= len(gs.moveLog)
-    if moveLogForDepthInc >50:
+    if moveLogForDepthInc >60:
         DEPTH=6
-
+    if moveLogForDepthInc>13:
+        DEPTH=4
+        trigger_mid_game(piecePositionScores)
     nextMove=None
     #findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove)
 
     #random.shuffle(validMoves)
-    #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
-    negamaxAlphaBetaKillerMoveNew(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    """if gs.whiteToMove:
+        #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+        findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+    else:
+        #negamaxAlphaBetaKillerMoveNew(gs, validMoves, MAX_DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+        #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))"""
+    #negamaxAlphaBetaKillerMoveNew(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+    #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1) 
     print(counter)
     returnQueue.put(nextMove)
     
@@ -210,46 +142,37 @@ def findMoveNegaMax(gs,validMoves,depth,turnMultiplier):
         
         gs.undoMove()
     return maxScore
-def negamaxAlphaBetaKillerMove(gs,validMoves,depth,alpha,beta):
-    global nextMove, counter
-    counter+=1
+def negamaxAlphaBetaKillerMove(gs,validMoves,depth,alpha,beta,turnMultiplier):
+    #This is for iterative deepening since the code changes a bit
+    global nextMove, counter, KILLER_MOVE_TABLE,depth_it,nextMove_it
+    bestMove=None
+    counter += 1
     if depth == 0:
-        return (1 if gs.whiteToMove else -1)*scoreBoard(gs)
-    maxScore= -CHECKMATE
-    #Try killer move first
-    killer_moves = [[] for _ in range(depth+1)]
-    for move in killer_moves[depth]:
-        if move in validMoves:
-            validMoves.remove(move)
-            gs.makeMove(move)
-            nextMoves= gs.getValidMoves()
-            sort_moves(nextMoves)#Sort using MVV-LVA heuristic
-            score= -negamaxAlphaBetaKillerMove(gs, nextMoves, depth-1, -beta, -alpha)
-            if score>maxScore:
-                maxScore = score
-                nextMove=move
-                #print(move,score,depth)
-            gs.undoMove()
-            alpha= max(alpha,maxScore)
-            
-            if alpha >=beta:
-                break
-    #Try other moves
+        return turnMultiplier * scoreBoard(gs)
+
+    maxScore = -CHECKMATE
+    killer_move = KILLER_MOVE_TABLE[depth] if depth < len(KILLER_MOVE_TABLE) else None
+
+    # Move the killer move to the front of the validMoves list
+    if killer_move is not None and killer_move in validMoves:
+        validMoves.remove(killer_move)
+        validMoves.insert(0, killer_move)
+
     for move in validMoves:
         gs.makeMove(move)
-        nextMoves=gs.getValidMoves()
-        sort_moves(nextMoves)#Sort using MVV-LVA heuristic
-        score= -negamaxAlphaBetaKillerMove(gs, nextMoves, depth-1, -beta, -alpha)
-        
-        if score>maxScore:
-            maxScore=score
-            nextMove=move
-            #print(move,score,depth)
+        nextMoves = gs.getValidMoves()
+        sort_moves(nextMoves)  # Sort using MVV-LVA heuristic
+        score= -negamaxAlphaBetaKillerMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+        if score > maxScore:
+            maxScore = score
+            nextMove_it=move
+            #print(move, score * turnMultiplier, "depth:", depth, "killer moves:",len(KILLER_MOVE_TABLE))
         gs.undoMove()
-        alpha= max(alpha,maxScore)
-        if alpha>=beta:
-            #Save killer move for this depth
-            killer_moves[depth].append(move)
+        if maxScore > alpha:  # pruning
+            alpha = maxScore
+        if alpha >= beta:
+        # Store the killer move in the table for the current depth
+            KILLER_MOVE_TABLE[depth] = move
             break
     return maxScore
 def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
@@ -269,13 +192,14 @@ def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
             maxScore= score
             if depth== DEPTH:
                 nextMove= move
-                print(move,score*turnMultiplier, "depth:",depth)
+                print(move,score*turnMultiplier, "depth:",depth, scoreBoard(gs))
         gs.undoMove()
         if maxScore > alpha: #pruning
             alpha=maxScore
         if alpha >=beta:
             break
-    #print(maxScore)
+
+
     return maxScore
 
 
@@ -300,17 +224,29 @@ def negamaxAlphaBetaKillerMoveNew(gs,validMoves,depth,alpha,beta,turnMultiplier)
         score = -negamaxAlphaBetaKillerMoveNew(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
         if score > maxScore:
             maxScore = score
-            if depth == DEPTH:
+            if depth == MAX_DEPTH:
                 nextMove = move
-                print(move, score * turnMultiplier, "depth:", depth, "killer moves:",len(KILLER_MOVE_TABLE))
+                print(move, score*turnMultiplier , "depth:", depth, scoreBoard(gs))
         gs.undoMove()
         if maxScore > alpha:  # pruning
             alpha = maxScore
         if alpha >= beta:
             # Store the killer move in the table for the current depth
+            #if len(KILLER_MOVE_TABLE[depth])
             KILLER_MOVE_TABLE[depth] = move
             break
     return maxScore
+
+"""
+Iterative deepening with nega max alpha beta pruning with heuristics
+"""
+def iterativeDeepening(gs,validMoves,turnMultiplier):
+    global nextMove,nextMove_it, MAX_DEPTH
+    for depth in range(1, DEPTH+1):
+        bestMove= findMoveNegaMaxAlphaBeta(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+        #print(bestMove)
+        print(nextMove,bestMove)
+    return bestMove
 """
 Pos score good for white, negative score is good for black
 """
@@ -383,5 +319,17 @@ def scoreMaterial(board):
 def sort_moves(validMoves):
     for i in range(len(validMoves)):
         for j in range(i+1, len(validMoves)):
-            if gs.move_value(validMoves[j])> gs.move_value(validMoves[i]):
+            if gs.move_value(validMoves[j],gs.board,gs)> gs.move_value(validMoves[i],gs.board,gs):
                 validMoves[i], validMoves[j]= validMoves[j], validMoves[i]
+    
+def trigger_mid_game(piecePositionScores,is_on=False):
+    if is_on == True:
+        pass
+    else:
+        piecePositionScores= {"N":cw.knightTableMidGamew,
+                        "B":[cw.bishopTableMidGamew,cw.bishopTableMidGameb],
+                        "R":[cw.rookTableMidGamew,cw.rookTableMidGameb],
+                        "Q":[cw.queenTableMidGamew,cw.queenTableMidGameb],
+                        "p":[cw.pawnTableMidGamew,cw.pawnTableMidGameb],
+                        "K":[cw.kingTableMidGamew,cw.knightTableMidGameb]}
+        return piecePositionScores

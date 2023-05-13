@@ -7,7 +7,6 @@ import ChessEngine, ChessAI,ChessWeight
 import time
 from multiprocessing import Process, Queue
 #from functools import lru_cache
-
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH= 250
 MOVE_LOG_PANEL_HEIGHT = BOARD_HEIGHT
@@ -47,7 +46,7 @@ def main():
     sqSelected= () # no square is selected, keep track of last click 
     playerClicks=[] # 2 tuples
     gameOver= False
-    playerOne=False #If a Human is playing white, then this will be true. If Ai is playing white it will be false
+    playerOne=True #If a Human is playing white, then this will be true. If Ai is playing white it will be false
     playerTwo=False
     AIThinking= False
     moveFinderProcess= None

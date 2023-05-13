@@ -1,5 +1,6 @@
 import copy
 import time
+import ChessWeight as cw
 """Class stores all information about the current chess game.
     And checking for valid moves for current GameState, and move log.
 """
@@ -10,15 +11,6 @@ class GameState():
 
         
         self.board = [
-            ['bR','bN','bB','bQ','bK','bB','bN','bR'],
-            ['bp','bp','bp','bp','bp','bp','bp','bp'],
-            ['--','--','--','--','--','--','--','--'],
-            ['--','--','--','--','--','--','--','--'],
-            ['--','--','--','--','--','--','--','--'],
-            ['--','--','--','--','--','--','--','--'],
-            ['wp','wp','wp','wp','wp','wp','wp','wp'],
-            ['wR','wN','wB','wQ','wK','wB','wN','wR']]
-        self.board = [
             ['bR','--','bB','bQ','bK','--','bN','bR'],
             ['bp','bp','bp','bp','--','bp','bp','bp'],
             ['--','--','bN','--','--','--','--','--'],
@@ -27,6 +19,16 @@ class GameState():
             ['--','--','--','--','--','wN','--','--'],
             ['wp','wp','wp','wp','--','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','--','--','wR']]
+        self.board = [
+            ['bR','bN','bB','bQ','bK','bB','bN','bR'],
+            ['bp','bp','bp','bp','bp','bp','bp','bp'],
+            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','--','--','--','--','--'],
+            ['wp','wp','wp','wp','wp','wp','wp','wp'],
+            ['wR','wN','wB','wQ','wK','wB','wN','wR']]
+
 
         
         self.whiteToMove= True
@@ -620,15 +622,56 @@ class GameState():
         else:
             return False
     
-    def move_value(self,move):
-        pieceScore={"K":0,"Q":9.5,'R':5.63,'B':3.33,"N":3.05,'p':1}
-        pieceCaptured= self.board[move.endRow][move.endCol]
-        attacker=self.board[move.startRow][move.startCol]
-        if pieceCaptured !='--' and attacker != '--':
-            victim= pieceCaptured
-            #print(attacker,victim)
-            return 10*pieceScore[victim[1]]-pieceScore[attacker[1]]
+    def move_value(self,move,board,gs):
+        piecePositionScores= {"N":[cw.knightScores,cw.knightScores],
+                        "B":[cw.bishopsScoresw,cw.bishopsScoresb],
+                        "R":[cw.rooksScorew,cw.rooksScoreb],
+                        "Q":[cw.queensScorew,cw.queensScoreb],
+                        "p":[cw.pawnScoresw,cw.pawnScoresb],
+                        "K":[cw.kingsScorew,cw.kingsScoreb]}
+        pieceScore={"K":0,"Q":10,'R':5,'B':3,"N":3,'p':1}
+
+        attacker=board[move.startRow][move.startCol] #translated to wp or whatever
+        victim=board[move.endRow][move.endCol]
+        
+        
+        
+        if attacker[0] != victim[0] and attacker!= '--' and victim!='--':
+            #print(move.startRow,move.startCol)
+            #print(pieceScore[victim[1]]+6-(pieceScore[attacker[1]]/100))
+            return pieceScore[victim[1]]+6-(pieceScore[attacker[1]]/100)
+            
         return 0
+    
+        """
+            def move_value(self,move,board,gs):
+        piecePositionScores= {"N":[cw.knightScores,cw.knightScores],
+                        "B":[cw.bishopsScoresw,cw.bishopsScoresb],
+                        "R":[cw.rooksScorew,cw.rooksScoreb],
+                        "Q":[cw.queensScorew,cw.queensScoreb],
+                        "p":[cw.pawnScoresw,cw.pawnScoresb],
+                        "K":[cw.kingsScorew,cw.kingsScoreb]}
+        pieceScore={"K":0,"Q":9.5,'R':5.33,'B':3.03,"N":3.05,'p':1}
+
+        attacker=board[move.startRow][move.startCol] #translated to wp or whatever
+        victim=board[move.endRow][move.endCol]
+        
+        
+        
+        if attacker[0] != victim[0] and attacker!= '--' and victim!='--':
+            #print(move.startRow,move.startCol)
+            if attacker[0] == 'w':
+                attacker_pos_score=piecePositionScores[attacker[1]][0][move.startRow][move.startCol]
+                victim_pos_score=piecePositionScores[victim[1]][1][move.endRow][move.endCol]
+                #print(attacker_pos_score,victim_pos_score)
+                return 10*(pieceScore[victim[1]]+victim_pos_score*0.16)-(pieceScore[attacker[1]]+attacker_pos_score)
+            else:
+                attacker_pos_score=piecePositionScores[attacker[1]][1][move.startRow][move.startCol]
+                victim_pos_score=piecePositionScores[victim[1]][0][move.endRow][move.endCol]
+                #print(attacker_pos_score,victim_pos_score)
+                return 10*(pieceScore[victim[1]]+victim_pos_score*0.16)-(pieceScore[attacker[1]]+attacker_pos_score)
+        return 0
+        """
 
 
 
