@@ -19,7 +19,7 @@ class GameState():
             ['--','--','--','--','--','wN','--','--'],
             ['wp','wp','wp','wp','--','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','--','--','wR']]
-        self.board = [
+        """self.board = [
             ['bR','bN','bB','bQ','bK','bB','bN','bR'],
             ['bp','bp','bp','bp','bp','bp','bp','bp'],
             ['--','--','--','--','--','--','--','--'],
@@ -28,7 +28,7 @@ class GameState():
             ['--','--','--','--','--','--','--','--'],
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
-
+"""
 
         
         self.whiteToMove= True
@@ -83,10 +83,17 @@ class GameState():
         self.castleRightLog.append(CastleRights(self.currentCastlingRight.wks,self.currentCastlingRight.bks,
                                         self.currentCastlingRight.wqs,self.currentCastlingRight.bqs))
         
-        
+    def makeNullMove(self):
+        move='--'
+        self.whiteToMove= not self.whiteToMove
         """
         Undo the last move made
         """
+    def undoNullMove(self):
+        self.staleMate= False
+        self.checkMate= False
+        self.treeFoldRep= False
+        self.whiteToMove= not self.whiteToMove
     def undoMove(self):
         if len(self.moveLog) != 0: #check if there are moves
             move= self.moveLog.pop()

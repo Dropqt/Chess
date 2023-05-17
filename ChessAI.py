@@ -16,10 +16,12 @@ piecePositionScores= {"N":cw.knightScores,
 CHECKMATE= 50000
 STALEMATE=0
 global DEPTH, MAX_DEPTH
-DEPTH=4
+DEPTH=5
 MAX_DEPTH=6
 global KILLER_MOVE_TABLE
 KILLER_MOVE_TABLE=  [[] for _ in range(10)]
+global GAME_STAGE
+GAME_STAGE=1
 """
 Random Move
 """
@@ -67,28 +69,29 @@ def findBestMoveMinMaxNoRecursion(gs, validMoves):
 Helper method for making the first recursive call
 """
 def findBestMove(gs, validMoves,returnQueue):
-    global nextMove, counter, DEPTH
+    global nextMove, counter, DEPTH, GAME_STAGE
     counter=0
     moveLogForDepthInc= len(gs.moveLog)
     if moveLogForDepthInc >60:
-        DEPTH=6
+        DEPTH=5
     if moveLogForDepthInc>13:
         DEPTH=4
-        trigger_mid_game(piecePositionScores)
+        trigger_mid_game(piecePositionScores, GAME_STAGE)
     nextMove=None
     #findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove)
 
     #random.shuffle(validMoves)
     """if gs.whiteToMove:
         #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
-        findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
     else:
         #negamaxAlphaBetaKillerMoveNew(gs, validMoves, MAX_DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
         #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
-        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))"""
+        findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)"""
     #negamaxAlphaBetaKillerMoveNew(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
     iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
-    #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1) 
+    #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+    #nullMoveHeuristicNegaMax(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1) 
     print(counter)
     returnQueue.put(nextMove)
     
@@ -243,10 +246,43 @@ Iterative deepening with nega max alpha beta pruning with heuristics
 def iterativeDeepening(gs,validMoves,turnMultiplier):
     global nextMove,nextMove_it, MAX_DEPTH
     for depth in range(1, DEPTH+1):
-        bestMove= findMoveNegaMaxAlphaBeta(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+        bestMove= nullMoveHeuristicNegaMax(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
         #print(bestMove)
+        if bestMove== (5000*(1 if gs.whiteToMove else -1)):
+            return bestMove
         print(nextMove,bestMove)
     return bestMove
+def nullMoveHeuristicNegaMax(gs,validMoves,depth,alpha,beta,turnMultiplier):
+    global nextMove
+    if depth==0:
+        return turnMultiplier*scoreBoard(gs)
+    R=1 #reduce search depth
+    #Null Move Heuristic
+    n_move='--'
+    if depth >=2 and  not gs.inCheck(): #Only consider null moves at certain depth
+        gs.makeNullMove()
+        score=-nullMoveHeuristicNegaMax(gs,validMoves,depth - 1 - R,alpha,beta,turnMultiplier)
+        gs.undoNullMove()
+        if score>=beta:
+            return beta
+    
+    maxScore= -CHECKMATE
+    for move in validMoves:
+        gs.makeMove(move)
+        nextMoves= gs.getValidMoves()
+        sort_moves(nextMoves)
+        score= -nullMoveHeuristicNegaMax(gs,validMoves,depth-1, -beta,-alpha, -turnMultiplier)
+        gs.undoMove()
+        if score > maxScore:
+            maxScore= score
+            if depth == DEPTH:
+                nextMove=move
+        if maxScore > alpha:
+            alpha= maxScore
+        if alpha >=beta:
+            break
+    return maxScore
+        
 """
 Pos score good for white, negative score is good for black
 """
@@ -295,9 +331,9 @@ def scoreBoard(gs):
                     else:
                         piecePositionScore= piecePositionScores['p'][1][row][col]
                 if square[0] == 'w':
-                    score+= pieceScore[square[1]] + piecePositionScore *0.16
+                    score+= pieceScore[square[1]] + piecePositionScore *0.2
                 elif square[0]=='b':
-                    score-= pieceScore[square[1]] + piecePositionScore *0.16
+                    score-= pieceScore[square[1]] + piecePositionScore *0.2
     return score
 """
 Score the board based on material
@@ -322,8 +358,10 @@ def sort_moves(validMoves):
             if gs.move_value(validMoves[j],gs.board,gs)> gs.move_value(validMoves[i],gs.board,gs):
                 validMoves[i], validMoves[j]= validMoves[j], validMoves[i]
     
-def trigger_mid_game(piecePositionScores,is_on=False):
-    if is_on == True:
+def trigger_mid_game(piecePositionScores,GAME_STAGE1):
+    global GAME_STAGE
+    game_stage= GAME_STAGE
+    if GAME_STAGE >=2:
         pass
     else:
         piecePositionScores= {"N":cw.knightTableMidGamew,
@@ -332,4 +370,6 @@ def trigger_mid_game(piecePositionScores,is_on=False):
                         "Q":[cw.queenTableMidGamew,cw.queenTableMidGameb],
                         "p":[cw.pawnTableMidGamew,cw.pawnTableMidGameb],
                         "K":[cw.kingTableMidGamew,cw.knightTableMidGameb]}
+        GAME_STAGE=2
+        print('Midgame Triggered')
         return piecePositionScores
