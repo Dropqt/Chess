@@ -20,15 +20,15 @@ class GameState():
             ['wp','wp','wp','wp','--','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','--','--','wR']]
         """self.board = [
-            ['--','--','--','--','wQ','--','--','--'],
+            ['bQ','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','bK'],
-            ['--','--','--','--','--','wp','bp','--'],
+            ['--','--','--','--','--','bR','bp','--'],
             ['--','--','--','--','--','--','wp','--'],
-            ['--','--','--','--','--','--','--','wp'],
             ['--','--','--','--','--','--','--','--'],
-            ['--','--','--','--','--','--','wK','--']]"""
-        self.board = [
+            ['--','--','--','--','--','--','wp','wp'],
+            ['--','--','--','--','--','--','--','wK']]"""
+        """self.board = [
             ['bR','bN','bB','bQ','bK','bB','bN','bR'],
             ['bp','bp','bp','bp','bp','bp','bp','bp'],
             ['--','--','--','--','--','--','--','--'],
@@ -36,7 +36,7 @@ class GameState():
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
-            ['wR','wN','wB','wQ','wK','wB','wN','wR']]
+            ['wR','wN','wB','wQ','wK','wB','wN','wR']]"""
 
 
         
@@ -173,6 +173,7 @@ class GameState():
                                     self.currentCastlingRight.wqs,self.currentCastlingRight.bqs)#copy the current castling rights
         #1. Generate all possible moves
         moves=self.getAllPossibleMoves()
+        invalidMoves=[]
         if self.whiteToMove:
             self.getCastleMoves(self.whiteKingLocation[0],self.whiteKingLocation[1],moves)
         else:
@@ -184,14 +185,17 @@ class GameState():
             #4. For each of your opponents moves, see if they attack your king
             self.whiteToMove= not self.whiteToMove
             if self.inCheck():
-                moves.remove(moves[i]) #5. if they do attack your king, its not a valid move
+                invalidMoves.append(moves[i])
+                #moves.remove(moves[i]) #5. if they do attack your king, its not a valid move
             self.whiteToMove= not self.whiteToMove
             self.undoMove()
+        for move in invalidMoves:
+            moves.remove(move)
         if len(moves)== 0: #either checkmate or stalemate
-            if self.inCheck():
-                self.checkMate= True
-            else:
+            if not self.inCheck():
                 self.staleMate= True
+            else:
+                self.checkMate= True
         else:
             self.checkMate= False
             self.staleMate= False
@@ -617,7 +621,7 @@ class GameState():
         
     def getKingsideCastleMoves(self,r,c,moves):
         if r+1 >7 or c +1 >7 or r-2<0 or c-2<0:
-            pass
+            isCastleMove=False
         else:
             if self.board[r][c+1]=='--' and self.board [r][c+2]== '--':
                 if not self.squareUnderAttack(r,c+1) and not self.squareUnderAttack(r,c+2):
@@ -739,7 +743,7 @@ class Move():
 
             
         
-    """
+    """ 
     Overriding the equals method
     """
     def __eq__(self,other):

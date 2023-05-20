@@ -73,24 +73,26 @@ def findBestMove(gs, validMoves,returnQueue):
     moveLogForDepthInc= len(gs.moveLog)
     if moveLogForDepthInc >60:
         DEPTH=5
-    if moveLogForDepthInc>13:
-        DEPTH=4
+    if moveLogForDepthInc>16:
+        DEPTH=5
         trigger_mid_game(piecePositionScores, GAME_STAGE)
     nextMove=None
     #findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove)
 
     #random.shuffle(validMoves)
-    if gs.whiteToMove:
-        findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+    """if gs.whiteToMove:
+        #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
         #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
     else:
         #negamaxAlphaBetaKillerMoveNew(gs, validMoves, MAX_DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
-        #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+        #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+        #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)"""
+    #findMoveNegaMax(gs,validMoves,DEPTH, 1 if gs.whiteToMove else -1)
     #negamaxAlphaBetaKillerMoveNew(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
     #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
-    #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+    findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
     #nullMoveHeuristicNegaMax(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1) 
+    #findMoveNegaMaxAlphaBetaTEST(gs,validMoves,DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1)
     print(counter, 'counter')
     returnQueue.put(nextMove)
     
@@ -140,49 +142,62 @@ def findMoveNegaMax(gs,validMoves,depth,turnMultiplier):
             maxScore= score
             if depth== DEPTH:
                 nextMove= move
-                
+                print(move,score,scoreBoard(gs))
         
         gs.undoMove()
     return maxScore
-def negamaxAlphaBetaKillerMove(gs,validMoves,depth,alpha,beta,turnMultiplier):
-    #This is for iterative deepening since the code changes a bit
-    global nextMove, counter, KILLER_MOVE_TABLE,depth_it,nextMove_it
-    bestMove=None
+def findMoveNegaMaxAlphaBetaTEST(gs, validMoves, depth, alpha, beta, turnMultiplier):
+    global nextMove, counter, DEPTH
     counter += 1
+
+    # Check if we reached the maximum depth, then evaluate board
     if depth == 0:
         return turnMultiplier * scoreBoard(gs)
 
     maxScore = -CHECKMATE
-    killer_move = KILLER_MOVE_TABLE[depth] if depth < len(KILLER_MOVE_TABLE) else None
-
-    # Move the killer move to the front of the validMoves list
-    if killer_move is not None and killer_move in validMoves:
-        validMoves.remove(killer_move)
-        validMoves.insert(0, killer_move)
 
     for move in validMoves:
         gs.makeMove(move)
         nextMoves = gs.getValidMoves()
-        sort_moves(nextMoves)  # Sort using MVV-LVA heuristic
-        score= -negamaxAlphaBetaKillerMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+
+        # If the opponent has no valid moves after this move
+        if gs.staleMate:
+            score = 0
+        elif gs.checkMate:
+            # If the opponent is checkmated, then this move is a winning move.
+            # But we need to consider whose perspective we are evaluating from.
+            if gs.whiteToMove:  # It's white's turn, but black just made a move and checkmated
+                score = -CHECKMATE
+            else:
+                score = CHECKMATE
+        else:
+            # Otherwise, proceed with regular alpha-beta search
+            score = -findMoveNegaMaxAlphaBetaTEST(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+
+        gs.undoMove()  # undo move to restore the board state
+
+        # Alpha-beta pruning logic
         if score > maxScore:
             maxScore = score
-            nextMove_it=move
-            #print(move, score * turnMultiplier, "depth:", depth, "killer moves:",len(KILLER_MOVE_TABLE))
-        gs.undoMove()
+            if depth == DEPTH:
+                nextMove = move
+                print(move, score * turnMultiplier, "depth:", depth, scoreBoard(gs), maxScore)
+
         if maxScore > alpha:  # pruning
             alpha = maxScore
+
         if alpha >= beta:
-        # Store the killer move in the table for the current depth
-            KILLER_MOVE_TABLE[depth] = move
             break
+
     return maxScore
+
+
 def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
-    global nextMove, counter
-    STALEMATE
+    global nextMove, counter, DEPTH
     counter+=1
     if depth==0:
         return turnMultiplier * scoreBoard(gs)
+
     #move ordering - implement later?
     
     maxScore=-CHECKMATE
@@ -192,11 +207,16 @@ def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
         #sort_moves(nextMoves)#Sort using MVV-LVA heuristic
         nextMoves.sort(key=lambda move: (get_values(move.pieceCaptured[1]),-get_values(move.pieceMoved[1])), reverse= True)
         score= -findMoveNegaMaxAlphaBeta(gs,nextMoves,depth-1,-beta,-alpha,-turnMultiplier)
+        if score == CHECKMATE:
+            if gs.checkMate:
+                score=CHECKMATE
+            else:
+                score=0
         if score >maxScore:
             maxScore= score
             if depth== DEPTH:
                 nextMove= move
-                print(move,score*turnMultiplier, "depth:",depth, scoreBoard(gs))
+                print(move,score*turnMultiplier, "depth:",depth, scoreBoard(gs),maxScore)
                 #debug()
         gs.undoMove()
         if maxScore > alpha: #pruning
@@ -227,6 +247,12 @@ def negamaxAlphaBetaKillerMoveNew(gs,validMoves,depth,alpha,beta,turnMultiplier)
         nextMoves = gs.getValidMoves()
         sort_moves(nextMoves)  # Sort using MVV-LVA heuristic
         score = -negamaxAlphaBetaKillerMoveNew(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+        if score == CHECKMATE*turnMultiplier:
+            if gs.checkMate:
+                score=CHECKMATE
+                print(move, score*turnMultiplier , "depth:", depth, scoreBoard(gs))
+            else:
+                score=0
         if score > maxScore:
             maxScore = score
             if depth == MAX_DEPTH:
@@ -249,10 +275,9 @@ def iterativeDeepening(gs,validMoves,turnMultiplier):
     global nextMove,nextMove_it, DEPTH
     for depth in range(1, DEPTH+1):
         bestMove= findMoveNegaMaxAlphaBeta(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+
         #print(bestMove)
-        if bestMove== (10000*(1 if gs.whiteToMove else -1)):
-            return bestMove
-        print(nextMove,bestMove)
+        print(nextMove,bestMove*(1 if gs.whiteToMove else -1))
         #debug()
     return bestMove
 def nullMoveHeuristicNegaMax(gs,validMoves,depth,alpha,beta,turnMultiplier):
@@ -338,6 +363,10 @@ def scoreBoard(gs):
                     score+= pieceScore[square[1]] + piecePositionScore *0.2
                 elif square[0]=='b':
                     score-= pieceScore[square[1]] + piecePositionScore *0.2
+    """if (score== CHECKMATE or score== -CHECKMATE) and not gs.inCheck():
+        score=0
+    else:
+        score=CHECKMATE* 1 if gs.whiteToMove else -1"""
     return score
 """
 Score the board based on material
@@ -390,9 +419,10 @@ def debug():
     print('Is king in check: ' ,gs.inCheck())
     print('Is this checkmate?',gs.checkMate)
     print('Is this stalemate?', gs.staleMate)
-    print('Whos playing', gs.whiteToMove)
+    print('Whos playing', (1 if gs.whiteToMove else -1))
     print('Possible moves', len(gs.getAllPossibleMoves()),'valid moves', len(gs.getValidMoves()))
+    print(scoreBoard(gs))
     for j in gs.getValidMoves():
-        print(j,"VM")
+        print(j,"VM",scoreBoard(gs))
 """for i in gs.getAllPossibleMoves():
         print(i,'PM')"""
