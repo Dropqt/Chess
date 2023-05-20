@@ -144,7 +144,7 @@ def main():
             
         drawGameState(screen,gs,validMoves,sqSelected,moveLogFont)
         if gs.checkMate or gs.staleMate or gs.treeFoldRep():
-            gameOver= True
+            gameOver= True  
             if gs.staleMate:
                 drawEndGameText(screen,'Stalemate')
             elif gs.treeFoldRep():

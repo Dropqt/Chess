@@ -4,8 +4,7 @@ import ChessWeight as cw
 from ChessEngine import GameState
 
 gs=GameState()
-pieceScore={"K":0,"Q":9.5,'R':5.63,'B':3.33,"N":3.05,'p':1}
-
+pieceScore={"K":0,"Q":10,'R':5,'B':3,"N":3,'p':1}
 piecePositionScores= {"N":cw.knightScores,
                         "B":[cw.bishopsScoresw,cw.bishopsScoresb],
                         "R":[cw.rooksScorew,cw.rooksScoreb],
@@ -13,10 +12,10 @@ piecePositionScores= {"N":cw.knightScores,
                         "p":[cw.pawnScoresw,cw.pawnScoresb],
                         "K":[cw.kingsScorew,cw.kingsScoreb]}
 
-CHECKMATE= 50000
+CHECKMATE= 10000
 STALEMATE=0
 global DEPTH, MAX_DEPTH
-DEPTH=5
+DEPTH=4
 MAX_DEPTH=6
 global KILLER_MOVE_TABLE
 KILLER_MOVE_TABLE=  [[] for _ in range(10)]
@@ -81,18 +80,18 @@ def findBestMove(gs, validMoves,returnQueue):
     #findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove)
 
     #random.shuffle(validMoves)
-    """if gs.whiteToMove:
-        #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
-        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+    if gs.whiteToMove:
+        findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+        #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
     else:
         #negamaxAlphaBetaKillerMoveNew(gs, validMoves, MAX_DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-        #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
-        findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)"""
+        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+        #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
     #negamaxAlphaBetaKillerMoveNew(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-    iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+    #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
     #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
     #nullMoveHeuristicNegaMax(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1) 
-    print(counter)
+    print(counter, 'counter')
     returnQueue.put(nextMove)
     
 
@@ -180,6 +179,7 @@ def negamaxAlphaBetaKillerMove(gs,validMoves,depth,alpha,beta,turnMultiplier):
     return maxScore
 def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
     global nextMove, counter
+    STALEMATE
     counter+=1
     if depth==0:
         return turnMultiplier * scoreBoard(gs)
@@ -189,13 +189,15 @@ def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
     for move in validMoves:
         gs.makeMove(move)
         nextMoves=gs.getValidMoves()
-        sort_moves(nextMoves)#Sort using MVV-LVA heuristic
+        #sort_moves(nextMoves)#Sort using MVV-LVA heuristic
+        nextMoves.sort(key=lambda move: (get_values(move.pieceCaptured[1]),-get_values(move.pieceMoved[1])), reverse= True)
         score= -findMoveNegaMaxAlphaBeta(gs,nextMoves,depth-1,-beta,-alpha,-turnMultiplier)
         if score >maxScore:
             maxScore= score
             if depth== DEPTH:
                 nextMove= move
                 print(move,score*turnMultiplier, "depth:",depth, scoreBoard(gs))
+                #debug()
         gs.undoMove()
         if maxScore > alpha: #pruning
             alpha=maxScore
@@ -244,16 +246,18 @@ def negamaxAlphaBetaKillerMoveNew(gs,validMoves,depth,alpha,beta,turnMultiplier)
 Iterative deepening with nega max alpha beta pruning with heuristics
 """
 def iterativeDeepening(gs,validMoves,turnMultiplier):
-    global nextMove,nextMove_it, MAX_DEPTH
+    global nextMove,nextMove_it, DEPTH
     for depth in range(1, DEPTH+1):
-        bestMove= nullMoveHeuristicNegaMax(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+        bestMove= findMoveNegaMaxAlphaBeta(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
         #print(bestMove)
-        if bestMove== (5000*(1 if gs.whiteToMove else -1)):
+        if bestMove== (10000*(1 if gs.whiteToMove else -1)):
             return bestMove
         print(nextMove,bestMove)
+        #debug()
     return bestMove
 def nullMoveHeuristicNegaMax(gs,validMoves,depth,alpha,beta,turnMultiplier):
-    global nextMove
+    global nextMove, counter
+    counter+=1
     if depth==0:
         return turnMultiplier*scoreBoard(gs)
     R=1 #reduce search depth
@@ -271,7 +275,7 @@ def nullMoveHeuristicNegaMax(gs,validMoves,depth,alpha,beta,turnMultiplier):
         gs.makeMove(move)
         nextMoves= gs.getValidMoves()
         sort_moves(nextMoves)
-        score= -nullMoveHeuristicNegaMax(gs,validMoves,depth-1, -beta,-alpha, -turnMultiplier)
+        score= -nullMoveHeuristicNegaMax(gs,nextMoves,depth-1, -beta,-alpha, -turnMultiplier)
         gs.undoMove()
         if score > maxScore:
             maxScore= score
@@ -287,13 +291,13 @@ def nullMoveHeuristicNegaMax(gs,validMoves,depth,alpha,beta,turnMultiplier):
 Pos score good for white, negative score is good for black
 """
 def scoreBoard(gs):
-    if gs.checkMate:
+    if gs.staleMate:
+        return STALEMATE
+    elif gs.checkMate:
         if gs.whiteToMove:
             return -CHECKMATE #black wins
         else:
             return CHECKMATE #white wins
-    elif gs.staleMate:
-        return STALEMATE
     
     score= 0
     for row in range(len(gs.board)):
@@ -357,11 +361,17 @@ def sort_moves(validMoves):
         for j in range(i+1, len(validMoves)):
             if gs.move_value(validMoves[j],gs.board,gs)> gs.move_value(validMoves[i],gs.board,gs):
                 validMoves[i], validMoves[j]= validMoves[j], validMoves[i]
-    
-def trigger_mid_game(piecePositionScores,GAME_STAGE1):
+
+def get_values(piece):
+    pieceScore={"K":0,"Q":10,'R':5,'B':3,"N":3,'p':1,'--':0,'-':0}
+    if piece in pieceScore:
+        return pieceScore[piece]
+def trigger_mid_game(piecePositionScores,game_stage):
     global GAME_STAGE
-    game_stage= GAME_STAGE
-    if GAME_STAGE >=2:
+    gameFlag=False
+    game_stage=GAME_STAGE
+    
+    if gameFlag ==True:
         pass
     else:
         piecePositionScores= {"N":cw.knightTableMidGamew,
@@ -371,5 +381,18 @@ def trigger_mid_game(piecePositionScores,GAME_STAGE1):
                         "p":[cw.pawnTableMidGamew,cw.pawnTableMidGameb],
                         "K":[cw.kingTableMidGamew,cw.knightTableMidGameb]}
         GAME_STAGE=2
+        gameFlag=True
         print('Midgame Triggered')
         return piecePositionScores
+def debug():
+    print(gs.board)
+    #print(len(gs.getValidMoves()))
+    print('Is king in check: ' ,gs.inCheck())
+    print('Is this checkmate?',gs.checkMate)
+    print('Is this stalemate?', gs.staleMate)
+    print('Whos playing', gs.whiteToMove)
+    print('Possible moves', len(gs.getAllPossibleMoves()),'valid moves', len(gs.getValidMoves()))
+    for j in gs.getValidMoves():
+        print(j,"VM")
+"""for i in gs.getAllPossibleMoves():
+        print(i,'PM')"""

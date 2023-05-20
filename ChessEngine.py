@@ -20,6 +20,15 @@ class GameState():
             ['wp','wp','wp','wp','--','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','--','--','wR']]
         """self.board = [
+            ['--','--','--','--','wQ','--','--','--'],
+            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','--','--','--','--','bK'],
+            ['--','--','--','--','--','wp','bp','--'],
+            ['--','--','--','--','--','--','wp','--'],
+            ['--','--','--','--','--','--','--','wp'],
+            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','--','--','--','wK','--']]"""
+        self.board = [
             ['bR','bN','bB','bQ','bK','bB','bN','bR'],
             ['bp','bp','bp','bp','bp','bp','bp','bp'],
             ['--','--','--','--','--','--','--','--'],
@@ -28,7 +37,7 @@ class GameState():
             ['--','--','--','--','--','--','--','--'],
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
-"""
+
 
         
         self.whiteToMove= True
@@ -607,9 +616,12 @@ class GameState():
         
         
     def getKingsideCastleMoves(self,r,c,moves):
-        if self.board[r][c+1]=='--' and self.board [r][c+2]== '--':
-            if not self.squareUnderAttack(r,c+1) and not self.squareUnderAttack(r,c+2):
-                moves.append(Move((r,c),(r,c+2),self.board, isCastleMove=True))
+        if r+1 >7 or c +1 >7 or r-2<0 or c-2<0:
+            pass
+        else:
+            if self.board[r][c+1]=='--' and self.board [r][c+2]== '--':
+                if not self.squareUnderAttack(r,c+1) and not self.squareUnderAttack(r,c+2):
+                    moves.append(Move((r,c),(r,c+2),self.board, isCastleMove=True))
     def getQueensideCastleMoves(self,r,c,moves):
         if self.board[r][c-1]=='--' and self.board[r][c-2]=='--' and self.board[r][c-3]=='--':
             if not self.squareUnderAttack(r,c-1) and not self.squareUnderAttack(r,c-2):
@@ -724,6 +736,8 @@ class Move():
         
         #print(self.moveID)
 
+
+            
         
     """
     Overriding the equals method
