@@ -29,6 +29,15 @@ class GameState():
             ['--','--','--','--','--','--','wp','wp'],
             ['--','--','--','--','--','--','--','wK']]"""
         """self.board = [
+            ['--','--','--','--','wQ','--','--','--'],
+            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','--','--','--','--','bK'],
+            ['--','--','--','--','--','wp','bp','--'],
+            ['--','--','--','--','--','--','wp','--'],
+            ['--','--','--','--','--','--','--','--'],
+            ['--','--','--','--','--','--','wp','wp'],
+            ['--','--','--','--','--','--','--','wK']]"""
+        self.board = [
             ['bR','bN','bB','bQ','bK','bB','bN','bR'],
             ['bp','bp','bp','bp','bp','bp','bp','bp'],
             ['--','--','--','--','--','--','--','--'],
@@ -36,11 +45,11 @@ class GameState():
             ['--','--','--','--','--','--','--','--'],
             ['--','--','--','--','--','--','--','--'],
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
-            ['wR','wN','wB','wQ','wK','wB','wN','wR']]"""
+            ['wR','wN','wB','wQ','wK','wB','wN','wR']]
 
 
         
-        self.whiteToMove= True
+        self.whiteToMove=True
         self.moveLog=[]
         self.moveFunctions={'p':self.getPawnMoves,'R':self.getRookMoves,'N':self.getKnightMoves,
                             'B':self.getBishopMoves,'Q':self.getQueenMoves,'K':self.getKingMoves}
@@ -620,12 +629,9 @@ class GameState():
         
         
     def getKingsideCastleMoves(self,r,c,moves):
-        if r+1 >7 or c +1 >7 or r-2<0 or c-2<0:
-            isCastleMove=False
-        else:
-            if self.board[r][c+1]=='--' and self.board [r][c+2]== '--':
-                if not self.squareUnderAttack(r,c+1) and not self.squareUnderAttack(r,c+2):
-                    moves.append(Move((r,c),(r,c+2),self.board, isCastleMove=True))
+        if self.board[r][c+1]=='--' and self.board [r][c+2]== '--':
+            if not self.squareUnderAttack(r,c+1) and not self.squareUnderAttack(r,c+2):
+                moves.append(Move((r,c),(r,c+2),self.board, isCastleMove=True))
     def getQueensideCastleMoves(self,r,c,moves):
         if self.board[r][c-1]=='--' and self.board[r][c-2]=='--' and self.board[r][c-3]=='--':
             if not self.squareUnderAttack(r,c-1) and not self.squareUnderAttack(r,c-2):
@@ -644,57 +650,6 @@ class GameState():
                 return True
         else:
             return False
-    
-    def move_value(self,move,board,gs):
-        piecePositionScores= {"N":[cw.knightScores,cw.knightScores],
-                        "B":[cw.bishopsScoresw,cw.bishopsScoresb],
-                        "R":[cw.rooksScorew,cw.rooksScoreb],
-                        "Q":[cw.queensScorew,cw.queensScoreb],
-                        "p":[cw.pawnScoresw,cw.pawnScoresb],
-                        "K":[cw.kingsScorew,cw.kingsScoreb]}
-        pieceScore={"K":0,"Q":10,'R':5,'B':3,"N":3,'p':1}
-
-        attacker=board[move.startRow][move.startCol] #translated to wp or whatever
-        victim=board[move.endRow][move.endCol]
-        
-        
-        
-        if attacker[0] != victim[0] and attacker!= '--' and victim!='--':
-            #print(move.startRow,move.startCol)
-            #print(pieceScore[victim[1]]+6-(pieceScore[attacker[1]]/100))
-            return pieceScore[victim[1]]+6-(pieceScore[attacker[1]]/100)
-            
-        return 0
-    
-        """
-            def move_value(self,move,board,gs):
-        piecePositionScores= {"N":[cw.knightScores,cw.knightScores],
-                        "B":[cw.bishopsScoresw,cw.bishopsScoresb],
-                        "R":[cw.rooksScorew,cw.rooksScoreb],
-                        "Q":[cw.queensScorew,cw.queensScoreb],
-                        "p":[cw.pawnScoresw,cw.pawnScoresb],
-                        "K":[cw.kingsScorew,cw.kingsScoreb]}
-        pieceScore={"K":0,"Q":9.5,'R':5.33,'B':3.03,"N":3.05,'p':1}
-
-        attacker=board[move.startRow][move.startCol] #translated to wp or whatever
-        victim=board[move.endRow][move.endCol]
-        
-        
-        
-        if attacker[0] != victim[0] and attacker!= '--' and victim!='--':
-            #print(move.startRow,move.startCol)
-            if attacker[0] == 'w':
-                attacker_pos_score=piecePositionScores[attacker[1]][0][move.startRow][move.startCol]
-                victim_pos_score=piecePositionScores[victim[1]][1][move.endRow][move.endCol]
-                #print(attacker_pos_score,victim_pos_score)
-                return 10*(pieceScore[victim[1]]+victim_pos_score*0.16)-(pieceScore[attacker[1]]+attacker_pos_score)
-            else:
-                attacker_pos_score=piecePositionScores[attacker[1]][1][move.startRow][move.startCol]
-                victim_pos_score=piecePositionScores[victim[1]][0][move.endRow][move.endCol]
-                #print(attacker_pos_score,victim_pos_score)
-                return 10*(pieceScore[victim[1]]+victim_pos_score*0.16)-(pieceScore[attacker[1]]+attacker_pos_score)
-        return 0
-        """
 
 
 
