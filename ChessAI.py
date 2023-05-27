@@ -2,6 +2,7 @@ import random
 import time
 import ChessWeight as cw
 from ChessEngine import GameState
+from random import getrandbits
 
 gs=GameState()
 pieceScore={"K":0,"Q":10,'R':5,'B':3,"N":3,'p':1,'-':0}
@@ -12,14 +13,15 @@ piecePositionScores= {"N":cw.knightScores,
                         "p":[cw.pawnScoresw,cw.pawnScoresb],
                         "K":[cw.kingsScorew,cw.kingsScoreb]}
 
+
 CHECKMATE= 10000
 STALEMATE=0
 global DEPTH, MAX_DEPTH
-DEPTH=3
-MAX_DEPTH=6
+DEPTH=2
+MAX_DEPTH=2
 global killer_moves_white,killer_moves_black
-killer_moves_white = [[None, None] for _ in range(DEPTH+3)]  # maintain a list of killer moves for each depth for white
-killer_moves_black = [[None, None] for _ in range(DEPTH+3)]  # maintain a list of killer moves for each depth for black
+killer_moves_white = [[None, None] for _ in range(DEPTH+10)]  # maintain a list of killer moves for each depth for white
+killer_moves_black = [[None, None] for _ in range(DEPTH+10)]  # maintain a list of killer moves for each depth for black
 global GAME_STAGE
 GAME_STAGE=1
 """
@@ -73,14 +75,15 @@ def findBestMove(gs, validMoves,returnQueue):
     counter=0
     moveLogForDepthInc= len(gs.moveLog)
     if moveLogForDepthInc >49:
-        DEPTH=6
+        DEPTH=8
         #trigger_end_game() Not implemented yet
-    if moveLogForDepthInc>7:
+    elif moveLogForDepthInc > 25:
         DEPTH=5
+    elif moveLogForDepthInc>6:
+        DEPTH=4
         trigger_mid_game()
     nextMove=None
-    #findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove)
-
+    #alpha_beta_search(gs,validMoves,DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1)
     #random.shuffle(validMoves)
     if gs.whiteToMove:
         #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
@@ -89,6 +92,7 @@ def findBestMove(gs, validMoves,returnQueue):
     else:
         #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
         findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+        #findMoveNegaMax(gs,validMoves,MAX_DEPTH,1 if gs.whiteToMove else -1)
     #findMoveNegaMax(gs,validMoves,DEPTH, 1 if gs.whiteToMove else -1)
     #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
     #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
@@ -135,9 +139,11 @@ def findMoveNegaMax(gs,validMoves,depth,turnMultiplier):
     if depth==0:
         return turnMultiplier * scoreBoard(gs)
     maxScore=-CHECKMATE
+    validMoves.sort(key=mvv_lva_h, reverse=True)
     for move in validMoves:
         gs.makeMove(move)
         nextMoves=gs.getValidMoves()
+        nextMoves.sort(key=mvv_lva_h, reverse=True)
         score= -findMoveNegaMax(gs,nextMoves,depth-1,-turnMultiplier)
         if score >maxScore:
             maxScore= score
@@ -242,10 +248,10 @@ def findMoveKillerMoveHeuristic(gs, validMoves, depth, alpha, beta, turnMultipli
         nextMoves.sort(key=mvv_lva_h,reverse=True) #Sort using MVV-LVA Heuristic
         # Killer heuristic: If the current move is a killer move at this depth, give it a high priority
         if gs.whiteToMove:
-            if move in killer_moves_white[depth]:
+            if move in killer_moves_white[depth] and move in nextMoves:
                 nextMoves.insert(0, nextMoves.pop(nextMoves.index(move)))  # Move killer move to the front
         else:
-            if move in killer_moves_black[depth]:
+            if move in killer_moves_black[depth] and move in nextMoves:
                 nextMoves.insert(0, nextMoves.pop(nextMoves.index(move)))  # Move killer move to the front
 
         
@@ -272,6 +278,57 @@ def findMoveKillerMoveHeuristic(gs, validMoves, depth, alpha, beta, turnMultipli
             break
 
     return maxScore
+def alpha_beta_search(gs,validMoves, depth, alpha, beta,turnMultiplier):
+    global nextMove, counter, DEPTH
+    counter+=1
+    if depth==0:
+        return turnMultiplier * scoreBoard(gs)
+    hash_key = computeHash(gs.board)
+    stored_info = retrievePosition(hash_key)
+
+    if stored_info is not None and stored_info[1] >= depth:
+        # Use stored information from transposition table
+        #print('hit')
+        return stored_info[0]
+
+    validMoves.sort(key=mvv_lva_h,reverse=True)
+    maxScore=-CHECKMATE
+    for move in validMoves:
+        gs.makeMove(move)
+        nextMoves=gs.getValidMoves()
+        nextMoves.sort(key=mvv_lva_h, reverse=True)#Sort using MVV-LVA heuristic
+        if gs.whiteToMove:
+            if move in killer_moves_white[depth] and move in nextMoves:
+                nextMoves.insert(0, nextMoves.pop(nextMoves.index(move)))  # Move killer move to the front
+        else:
+            if move in killer_moves_black[depth] and move in nextMoves:
+                nextMoves.insert(0, nextMoves.pop(nextMoves.index(move)))  # Move killer move to the front
+        score= -alpha_beta_search(gs,nextMoves,depth-1,-beta,-alpha,-turnMultiplier)
+        if score == CHECKMATE:
+            if gs.checkMate:
+                score=CHECKMATE
+            else:
+                score=0
+        if score >maxScore:
+            maxScore= score
+            if depth== DEPTH:
+                nextMove= move
+                print(move,score*turnMultiplier, "depth:",depth,len(ZorbistTable))
+                #debug()
+        gs.undoMove()
+        if maxScore > alpha: #pruning
+            alpha=maxScore
+        if alpha >=beta:
+            #If there is a beta cutoff, add that move to the killer move list
+            if gs.whiteToMove:
+                killer_moves_white[depth] = [killer_moves_white[depth][1], move]  # Replace the oldest move
+            else:
+                killer_moves_black[depth] = [killer_moves_black[depth][1], move]  # Replace the oldest move
+            break
+
+        # After evaluating the position, store the information in the transposition table
+        storePosition(hash_key, score, depth, nextMove,killer_moves_white if gs.whiteToMove else killer_moves_black)
+    return maxScore
 
 """
 Iterative deepening with nega max alpha beta pruning with heuristics
@@ -279,7 +336,7 @@ Iterative deepening with nega max alpha beta pruning with heuristics
 def iterativeDeepening(gs,validMoves,turnMultiplier):
     global nextMove, DEPTH
     for depth in range(1, DEPTH+1):
-        bestMove= findMoveKillerMoveHeuristic(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+        bestMove= alpha_beta_search(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
 
         #print(bestMove)
         print(nextMove,bestMove*(1 if gs.whiteToMove else -1))
@@ -436,3 +493,33 @@ def debug():
         print(j,"VM",scoreBoard(gs))
 """    for i in gs.getAllPossibleMoves():
         print(i,'PM')"""
+
+"""
+Zorbist Hashing function
+"""
+#Defining pieces and board size
+pieces = ['bR','bN','bB','bQ','bK','bB','bN','bR','bp',
+          'wp','wR','wN','wB','wQ','wK','wB','wN','wR','--']
+ZorbistTable={}
+boardSize=8
+#Populating the table with random bitstrings
+for i in range(boardSize):
+    for j in range(boardSize):
+        for piece in pieces:
+            ZorbistTable[(i,j,piece)]=getrandbits(64) #64 bit hash value
+
+#Hash function
+def computeHash(board):
+    h=0
+    for i in range(boardSize):
+        for j in range(boardSize):
+            piece= board[i][j]
+            h ^=ZorbistTable[(i,j,piece)]
+    return h
+def storePosition(hashKey, score, depth, bestMove,killerMoves):
+    ZorbistTable[hashKey]=(score,depth,bestMove,killerMoves)
+def retrievePosition(hashKey):
+    if hashKey in ZorbistTable:
+        return ZorbistTable[hashKey]
+    else:
+        return None

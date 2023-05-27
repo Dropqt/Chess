@@ -108,7 +108,7 @@ rookTableMidGamew = [
     [5,  8,  8,  8,  8,  8,  8,  5],
     [5,  7,  7,  7,  7,  7,  7,  5],
     [0,  0,  0, 10, 10,  0,  0,  0],
-    [-5, 0,  0,  0,  0,  0,  0, -5]
+    [-5, 0,  0,  0,  0,  -1,  0, -5]
 ]
 rookTableMidGameb=[rookTableMidGamew[x] for x in range(len(rookTableMidGamew)-1,-1,-1)]
 pawnTableMidGamew = [
@@ -118,7 +118,7 @@ pawnTableMidGamew = [
     [1,   2,   3,  10,  10,   3,   2,   1],
     [1,   1,   2,   8,   8,   2,   1,   1],
     [2,   3,   4,   5,   5,   4,   3,   2],
-    [10, 10, 10, -10, -10, 10, 10, 10],
+    [0, 0, 0, -10, -10, 0, 0, 0],
     [0,   0,   0,   0,   0,   0,   0,   0]
 ]
 pawnTableMidGameb=[pawnTableMidGamew[x] for x in range(len(pawnTableMidGamew)-1,-1,-1)]
