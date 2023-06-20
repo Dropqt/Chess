@@ -5,7 +5,10 @@ environ['PYGAME_HIDE_SUPPORT_PROMPT']= '1'
 import pygame as p
 import ChessEngine, ChessAI,ChessWeight
 import time
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Manager
+from threading import Thread
+import logging
+#import queue
 #from functools import lru_cache
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH= 250
@@ -14,11 +17,9 @@ DIMENSION= 8
 SQ_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS= 15 #  for animations
 IMAGES= {}
-
 '''
 Init global dict of images. Only 1 execute in the main because its expensive
 '''
-
 def loadImages():
     pieces=['wR','wN','wB','wQ','wK','wp','bR','bN','bB','bQ','bK','bp']
     for piece in pieces:
@@ -39,6 +40,9 @@ def main():
     gs=ChessEngine.GameState()
     animate= False # Flag variable for when we should animate a move
     validMoves= gs.getValidMoves()
+    manager=Manager()
+    ZorbistHash=manager.dict()
+    logging.basicConfig(filename='app1.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
     moveMade= False #flag variable when a move is made
     
     loadImages() #only once before the while loop
@@ -102,6 +106,7 @@ def main():
                     moveMade=False
                     animate=False
                     gameOver=False
+                    ZorbistHash=manager.dict()
                     if AIThinking:
                         moveFinderProcess.terminate()
                         AIThinking= False
@@ -116,17 +121,35 @@ def main():
         #AI move finder
         if not gameOver and not humanTurn and not moveUndone:
             if not AIThinking:
+                logging.debug('If not aithinking start')
                 AIThinking=True
                 print("Thinking....")
                 returnQueue= Queue()# used to pass data between threads
-                moveFinderProcess= Process(target=ChessAI.findBestMove,args=(gs, validMoves, returnQueue))
+                #returnQueue=queue.Queue()
+                moveFinderProcess= Process(target=ChessAI.findBestMove,args=(gs, validMoves, returnQueue, ZorbistHash))
                 moveFinderProcess.start()# call findBestMove with (gs,validMoves, returnQueue)
-                #AIMove=ChessAI.findBestMove(gs, validMoves) ^^^^
-                
-                
+                #AIMove=ChessAI.findBestMove(gs, validMoves) ^^ ^^
+                #moveFinderThread= Thread(target=ChessAI.findBestMove(gs, validMoves, returnQueue, ZorbistHash))
+                #moveFinderThread.start()
             if not moveFinderProcess.is_alive():
                 print('Done thinking')
-                AIMove= returnQueue.get()
+                try:
+                    returnQD=returnQueue.get()
+                    AIMove=returnQD["nextMove"]
+                    
+                    #ZorbistHash.transpositionTable=returnQD['table']
+                    #ZorbistHash.zorbistTable=returnQD['zorb']
+                    #print(len(ZorbistHash.transpositionTable),'ovamo')
+                    #print(ChessAI.ZorbistHash.transpositionTable)
+                    #AIMove,Zorbist_Hash.transpositionTable=returnqueue.get()
+                    #Zorbist_Hash.transpositionTable = returnQueue.get(timeout=1)  # wait up to 1 second
+                    #Zorbist_Hash.zorbistTable=returnQueue.get(timeout=1)
+                    #AIMove = returnQueue.get(timeout=1)
+                except returnQueue.empty():  # 
+                    print("Queue.get() timed out.")
+                logging.debug('Done thinking')
+                #Zorbist_Hash=returnQueue.get()
+                #AIMove=returnQueue.get()
                 if AIMove == None:
                     AIMove= ChessAI.findRandomMove(validMoves)
                 gs.makeMove(AIMove)
@@ -261,7 +284,7 @@ def animateMove(move,screen,board,clock):
     global colors
     dR= move.endRow - move.startRow
     dC= move.endCol - move.startCol
-    framesPerSquare= 7 #frames to move one square
+    framesPerSquare= 10 #frames to move one square
     frameCount=((abs(dR)+abs(dC))*framesPerSquare)
     for frame in range(frameCount+1):
         r,c=(move.startRow + dR*frame/frameCount,move.startCol + dC*frame/frameCount)
@@ -283,7 +306,7 @@ def animateMove(move,screen,board,clock):
         clock.tick(60)
         
 def drawEndGameText(screen,text):
-    font= p.font.SysFont('Times New Roman', 12,False,False)
+    font= p.font.SysFont('Times New Roman', 24,False,False)
     textObject= font.render(text,0,p.Color('Gray'))
     textLocation= p.Rect(0,0,BOARD_WIDTH,BOARD_HEIGHT).move(BOARD_WIDTH/2-textObject.get_width()/2,BOARD_HEIGHT/2-textObject.get_height()/2)
     screen.blit(textObject, textLocation)

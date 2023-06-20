@@ -4,26 +4,34 @@ import ChessWeight as cw
 from ChessEngine import GameState
 from random import getrandbits
 
+#import pickle
 gs=GameState()
 pieceScore={"K":0,"Q":10,'R':5,'B':3,"N":3,'p':1,'-':0}
-piecePositionScores= {"N":cw.knightScores,
-                        "B":[cw.bishopsScoresw,cw.bishopsScoresb],
-                        "R":[cw.rooksScorew,cw.rooksScoreb],
-                        "Q":[cw.queensScorew,cw.queensScoreb],
-                        "p":[cw.pawnScoresw,cw.pawnScoresb],
-                        "K":[cw.kingsScorew,cw.kingsScoreb]}
+
+piecePositionScores={
+    "wN": cw.knightScores,
+    'bN': cw.knightScores,
+    'wB': cw.bishopsScoresw,
+    'bB': cw.bishopsScoresb,
+    'wQ': cw.queensScorew,
+    'bQ':cw.queensScoreb,
+    'wR': cw.rooksScorew,
+    'bR': cw.rooksScoreb,
+    'wp': cw.pawnScoresw,
+    'bp': cw.pawnScoresb,
+    'wK': cw.kingsScorew,
+    'bK': cw.kingsScoreb
+}
 
 
 CHECKMATE= 10000
 STALEMATE=0
 global DEPTH, MAX_DEPTH
 DEPTH=2
-MAX_DEPTH=2
+MAX_DEPTH=4
 global killer_moves_white,killer_moves_black
 killer_moves_white = [[None, None] for _ in range(DEPTH+10)]  # maintain a list of killer moves for each depth for white
 killer_moves_black = [[None, None] for _ in range(DEPTH+10)]  # maintain a list of killer moves for each depth for black
-global GAME_STAGE
-GAME_STAGE=1
 """
 Random Move
 """
@@ -70,37 +78,43 @@ def findBestMoveMinMaxNoRecursion(gs, validMoves):
 """ 
 Helper method for making the first recursive call
 """
-def findBestMove(gs, validMoves,returnQueue):
-    global nextMove, counter, DEPTH, GAME_STAGE
+def findBestMove(gs, validMoves,returnQueue,Zorbist_Hash):
+    global nextMove, counter, DEPTH
     counter=0
     moveLogForDepthInc= len(gs.moveLog)
     if moveLogForDepthInc >49:
-        DEPTH=8
+        DEPTH=4
         #trigger_end_game() Not implemented yet
     elif moveLogForDepthInc > 25:
-        DEPTH=5
-    elif moveLogForDepthInc>6:
         DEPTH=4
-        trigger_mid_game()
+    elif moveLogForDepthInc>12:
+        DEPTH=4
+        trigger_mid_game(moveLogForDepthInc)
     nextMove=None
-    #alpha_beta_search(gs,validMoves,DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1)
+    
+    alpha_beta_search(gs,validMoves,DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1,Zorbist_Hash)
     #random.shuffle(validMoves)
-    if gs.whiteToMove:
+    """if gs.whiteToMove:
         #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
-        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+        iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1),Zorbist_Hash)
         #findMoveKillerMoveHeuristic(gs,validMoves,DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
     else:
         #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
-        findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
+        #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1,Zorbist_Hash)
         #findMoveNegaMax(gs,validMoves,MAX_DEPTH,1 if gs.whiteToMove else -1)
+        findMoveKillerMoveHeuristic(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)"""
     #findMoveNegaMax(gs,validMoves,DEPTH, 1 if gs.whiteToMove else -1)
-    #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1))
+    #iterativeDeepening(gs,validMoves,(1 if gs.whiteToMove else -1), Zorbist_Hash)
     #findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE, 1 if gs.whiteToMove else -1)
     #nullMoveHeuristicNegaMax(gs, validMoves, DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1) 
     #findMoveNegaMaxAlphaBetaTEST(gs,validMoves,DEPTH,-CHECKMATE,CHECKMATE,1 if gs.whiteToMove else -1)
-    print(counter, 'counter')
-    returnQueue.put(nextMove)
-    
+    #returnQD={"nextMove":nextMove,'table':Zorbist_Hash.transpositionTable,'zorb':Zorbist_Hash.zorbistTable}
+    returnQD={'nextMove':nextMove}
+    returnQueue.put(returnQD)
+    #returnQueue.put(nextMove)
+    #print(len(Zorbist_Hash1.transpositionTable))
+    #Zorbist_Hash.transpositionTable={}
+    print(counter, 'Moves Calculated')
 
 def findMoveMinMax(gs,validMoves,depth,whiteToMove):
     global nextMove
@@ -199,7 +213,7 @@ def findMoveNegaMaxAlphaBetaTEST(gs, validMoves, depth, alpha, beta, turnMultipl
     return maxScore
 
 
-def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
+def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier, Zorbist_Hash):
     global nextMove, counter, DEPTH
     counter+=1
     if depth==0:
@@ -212,7 +226,7 @@ def findMoveNegaMaxAlphaBeta(gs,validMoves,depth,alpha,beta,turnMultiplier):
         nextMoves=gs.getValidMoves()
         #sort_moves(nextMoves)#Sort using MVV-LVA heuristic
         nextMoves.sort(key=mvv_lva_h, reverse=True)
-        score= -findMoveNegaMaxAlphaBeta(gs,nextMoves,depth-1,-beta,-alpha,-turnMultiplier)
+        score= -findMoveNegaMaxAlphaBeta(gs,nextMoves,depth-1,-beta,-alpha,-turnMultiplier, Zorbist_Hash)
         if score == CHECKMATE:
             if gs.checkMate:
                 score=CHECKMATE
@@ -278,19 +292,19 @@ def findMoveKillerMoveHeuristic(gs, validMoves, depth, alpha, beta, turnMultipli
             break
 
     return maxScore
-def alpha_beta_search(gs,validMoves, depth, alpha, beta,turnMultiplier):
+def alpha_beta_search(gs,validMoves, depth, alpha, beta,turnMultiplier,Zorbist_Hash):
     global nextMove, counter, DEPTH
     counter+=1
     if depth==0:
         return turnMultiplier * scoreBoard(gs)
-    hash_key = computeHash(gs.board)
-    stored_info = retrievePosition(hash_key)
+    #Compute hash for the current board position
+    hash_key=computeHash(gs.board)
+    stored_info=Zorbist_Hash.get(hash_key) if hash_key in Zorbist_Hash else None
 
-    if stored_info is not None and stored_info[1] >= depth:
+    if stored_info is not None and stored_info['depth'] >= depth:
         # Use stored information from transposition table
         #print('hit')
-        return stored_info[0]
-
+        return stored_info['score']
     validMoves.sort(key=mvv_lva_h,reverse=True)
     maxScore=-CHECKMATE
     for move in validMoves:
@@ -303,17 +317,14 @@ def alpha_beta_search(gs,validMoves, depth, alpha, beta,turnMultiplier):
         else:
             if move in killer_moves_black[depth] and move in nextMoves:
                 nextMoves.insert(0, nextMoves.pop(nextMoves.index(move)))  # Move killer move to the front
-        score= -alpha_beta_search(gs,nextMoves,depth-1,-beta,-alpha,-turnMultiplier)
-        if score == CHECKMATE:
-            if gs.checkMate:
-                score=CHECKMATE
-            else:
-                score=0
+        score= -alpha_beta_search(gs,nextMoves,depth-1,-beta,-alpha,-turnMultiplier,Zorbist_Hash)
+
         if score >maxScore:
             maxScore= score
             if depth== DEPTH:
                 nextMove= move
-                print(move,score*turnMultiplier, "depth:",depth,len(ZorbistTable))
+                print(move,score*turnMultiplier, "depth:",depth,len(Zorbist_Hash),scoreBoard(gs))
+                #Zorbist_Hash.storePosition(hash_key, maxScore, depth, nextMove)
                 #debug()
         gs.undoMove()
         if maxScore > alpha: #pruning
@@ -327,16 +338,18 @@ def alpha_beta_search(gs,validMoves, depth, alpha, beta,turnMultiplier):
             break
 
         # After evaluating the position, store the information in the transposition table
-        storePosition(hash_key, score, depth, nextMove,killer_moves_white if gs.whiteToMove else killer_moves_black)
+        
+        Zorbist_Hash[hash_key]={'score':maxScore,'depth':depth,'nextMove':nextMove} #Store the position in the hash table
+        #Zorbist_Hash.storePosition(hash_key,0,depth,nextMove)
     return maxScore
 
 """
 Iterative deepening with nega max alpha beta pruning with heuristics
 """
-def iterativeDeepening(gs,validMoves,turnMultiplier):
+def iterativeDeepening(gs,validMoves,turnMultiplier,Zorbist_Hash):
     global nextMove, DEPTH
     for depth in range(1, DEPTH+1):
-        bestMove= alpha_beta_search(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+        bestMove= alpha_beta_search(gs, validMoves, depth, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1,Zorbist_Hash)
 
         #print(bestMove)
         print(nextMove,bestMove*(1 if gs.whiteToMove else -1))
@@ -378,58 +391,48 @@ def nullMoveHeuristicNegaMax(gs,validMoves,depth,alpha,beta,turnMultiplier):
 Pos score good for white, negative score is good for black
 """
 def scoreBoard(gs):
-    if gs.staleMate:
-        return STALEMATE
-    elif gs.checkMate:
+    score= 0
+    if gs.checkMate:
+        if gs.staleMate:
+            return STALEMATE
         if gs.whiteToMove:
             return -CHECKMATE #black wins
         else:
             return CHECKMATE #white wins
+    Treefold=treeFoldScore(gs)
+    if Treefold:
+        print('STALEMATE')
+        return STALEMATE
     
-    score= 0
     for row in range(len(gs.board)):
         for col in range(len(gs.board[row])):
             square=gs.board[row][col]
             if square != '--':
+                piece_position_score=0
+                if square[1]!='K':
+                    piece_position_score= piecePositionScores[square][row][col]
+                if square[0]=='w':
+                    score+= pieceScore[square[1]]+piece_position_score
+                if square[0]=='b':
+                    score-=pieceScore[square[1]]+piece_position_score
                 #score it positionally
-                piecePositionScore=0
-                if square[1]== 'N':
-                    piecePositionScore= piecePositionScores['N'][row][col]
-                if square[1]=='B':
-                    #checking if the piece is black or white to check list within a list.
-                    if square[0]=='w':
-                        piecePositionScore= piecePositionScores['B'][0][row][col]
-                    else:
-                        piecePositionScore= piecePositionScores['B'][1][row][col]
-                if square[1]=='R':
-                    if square[0]=='w':
-                        piecePositionScore= piecePositionScores['R'][0][row][col]
-                    else:
-                        piecePositionScore= piecePositionScores['R'][1][row][col]
-                if square[1]=='Q':
-                    if square[0]=='w':
-                        piecePositionScore= piecePositionScores['Q'][0][row][col]
-                    else:
-                        piecePositionScore= piecePositionScores['Q'][1][row][col]
-                if square[1]=='K':
-                    if square[0]== 'w':
-                        piecePositionScore= piecePositionScores['K'][0][row][col]
-                    else:
-                        piecePositionScore= piecePositionScores['K'][1][row][col]
-                if square[1]=='p':
-                    if square[0]=='w':
-                        piecePositionScore= piecePositionScores['p'][0][row][col]
-                    else:
-                        piecePositionScore= piecePositionScores['p'][1][row][col]
-                if square[0] == 'w':
-                    score+= pieceScore[square[1]] + piecePositionScore *0.25
-                elif square[0]=='b':
-                    score-= pieceScore[square[1]] + piecePositionScore *0.25
+                
     """if (score== CHECKMATE or score== -CHECKMATE) and not gs.inCheck():
         score=0
     else:
         score=CHECKMATE* 1 if gs.whiteToMove else -1"""
     return score
+
+def treeFoldScore(gs):
+    if len(gs.moveLog)> 8:
+        moveOne=(gs.moveLog[-2],gs.moveLog[-1])
+        moveTwo=(gs.moveLog[-4],gs.moveLog[-3])
+        moveThree=(gs.moveLog[-6],gs.moveLog[-5])
+        moveFour=(gs.moveLog[-8],gs.moveLog[-7])
+        if moveOne==moveThree and moveTwo == moveFour:
+            return True
+    else:
+        return False
 """
 Score the board based on material
 """
@@ -455,20 +458,18 @@ def mvv_lva_h(move):
         victim_value = pieceScore[move.pieceCaptured[1]]
         return 10 * victim_value - attacker_value
     
-def trigger_mid_game():
-    if not hasattr(trigger_mid_game, 'ran'):
-        piecePositionScores["N"] = cw.knightTableMidGamew
-        piecePositionScores["B"] = [cw.bishopTableMidGamew, cw.bishopTableMidGameb]
-        piecePositionScores["R"] = [cw.rookTableMidGamew, cw.rookTableMidGameb]
-        piecePositionScores["Q"] = [cw.queenTableMidGamew, cw.queenTableMidGameb]
-        piecePositionScores["p"] = [cw.pawnTableMidGamew, cw.pawnTableMidGameb]
-        piecePositionScores["K"] = [cw.kingTableMidGamew, cw.kingTableMidGameb]
-        print('Midgame Triggered')
-        # Set attribute to indicate function has been run
-        trigger_mid_game.ran=True
-    else:
+def trigger_mid_game(moveLogForDepthInc):
+    if  moveLogForDepthInc>17:
         pass
-        
+    else:
+        piecePositionScores["N"] = cw.knightScoreMidGamew
+        piecePositionScores["B"] = [cw.bishopScoreMidGamew, cw.bishopScoreMidGameb]
+        piecePositionScores["R"] = [cw.rookScoreMidGamew, cw.rookScoreMidGameb]
+        piecePositionScores["Q"] = [cw.queenScoreMidGamew, cw.queenScoreMidGameb]
+        piecePositionScores["p"] = [cw.pawnsScoreMidGamew, cw.pawnsScoreMidGameb]
+        piecePositionScores["K"] = [cw.kingScoreMidGamew, cw.kingScoreMidGameb]
+        print('Midgame Triggered')
+
 def trigger_end_game(piecePositionScores):
     if not hasattr(trigger_end_game,"ran"):
         piecePositionScores["N"] = cw.knightTableEndGameW
@@ -498,28 +499,31 @@ def debug():
 Zorbist Hashing function
 """
 #Defining pieces and board size
-pieces = ['bR','bN','bB','bQ','bK','bB','bN','bR','bp',
-          'wp','wR','wN','wB','wQ','wK','wB','wN','wR','--']
-ZorbistTable={}
-boardSize=8
-#Populating the table with random bitstrings
-for i in range(boardSize):
-    for j in range(boardSize):
-        for piece in pieces:
-            ZorbistTable[(i,j,piece)]=getrandbits(64) #64 bit hash value
+pieces = ['bR', 'bN', 'bB', 'bQ', 'bK', 'bp', 'wR', 'wN', 'wB', 'wQ', 'wK', 'wp','--']
 
+def initZorbistTable():
+    zorbisttable = {}
+    for i in range(8): # Generate random bitstrings
+        for j in range(8):
+            for piece in pieces:
+                zorbisttable[(i,j,piece)]=getrandbits(64)
+    #print('There was an init for zorbistTable')
+    return zorbisttable
 #Hash function
 def computeHash(board):
     h=0
-    for i in range(boardSize):
-        for j in range(boardSize):
+    for i in range(8):
+        for j in range(8):
             piece= board[i][j]
-            h ^=ZorbistTable[(i,j,piece)]
+            h ^=zorbistTable[(i,j,piece)]
     return h
-def storePosition(hashKey, score, depth, bestMove,killerMoves):
-    ZorbistTable[hashKey]=(score,depth,bestMove,killerMoves)
+def storePosition(hashKey, maxScore, depth, bestMove):
+    Zorbist_Hash[hashKey]={
+        'score': maxScore,
+        'depth':depth,
+        'bestMove':bestMove
+    }
+
 def retrievePosition(hashKey):
-    if hashKey in ZorbistTable:
-        return ZorbistTable[hashKey]
-    else:
-        return None
+    return Zorbist_Hash.get(hashKey)
+zorbistTable=initZorbistTable()
